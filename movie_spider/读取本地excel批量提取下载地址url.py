@@ -39,5 +39,4 @@ df = pd.DataFrame(all_href_values,columns=['href'])
 #保存dataframe到excel文件中
 output_excel_path = f'E:/2023年/spider/href.xlsx'
 df.to_excel(output_excel_path,index = False)
-
 print(f"所有的href值已经保存到：{output_excel_path}")
