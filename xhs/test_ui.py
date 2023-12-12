@@ -9,6 +9,7 @@
 # @File : htmlui.py
 import re
 import time
+import pandas as pd
 from bs4 import BeautifulSoup
 import requests
 from selenium import webdriver
@@ -20,13 +21,28 @@ from selenium import webdriver
 # )
 #
 # time.sleep(5)
+#获取列表
 def movie():
     url = 'https://www.60b04.com/movie/wuma'
-
     response = requests.get(url)
-
     if response.status_code == 200:
-        print(response.text)
+        html_data = response.text
+        soup = BeautifulSoup(html_data,'html5lib')
+        #初始化一个值来储存提取的href值
+        href_values = []
+        #查找所有包含需求的值
+        for dt in soup.find_all('dt',class_ = 'preview-item'):
+            a_tag = dt.find('a', href = True)
+            if a_tag:
+                href_values.append(a_tag['href'])
+        #将href值转换成DataFrame
+        df = pd.DataFrame(href_values, columns=["href"])
+        #保存到目标路径
+        excel_path = f'E:/2023年/spider/href.xlsx'
+        df.to_excel(excel_path,index=False)
+        #遍历href_value提取href值并打印
+        for href in href_values:
+            print(href)
     return response.text
 
 def loading():
@@ -45,4 +61,6 @@ def loading():
             print(link)
 
     return link
-loading()
+
+movie()
+#loading()
