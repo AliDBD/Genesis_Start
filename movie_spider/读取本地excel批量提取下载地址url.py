@@ -35,7 +35,6 @@ for url in url_list:
     else:
         print(f"访问失败：{url}")
 df = pd.DataFrame(all_href_values,columns=['href'])
-
 #保存dataframe到excel文件中
 output_excel_path = f'E:/2023年/spider/href.xlsx'
 df.to_excel(output_excel_path,index = False)
