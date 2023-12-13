@@ -19,7 +19,7 @@ links = pd.read_excel(excel_path)['href']
 mp4_links = []
 for link in links:
     time.sleep(1)
-    url = f'https://www.60b04.com{link}'
+    url = f'https://www.111.com{link}'
     response = requests.get(url)
     if response.status_code == 200:
         html_data = response.text
