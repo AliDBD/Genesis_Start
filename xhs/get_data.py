@@ -14,6 +14,20 @@ import pandas as pd
 from bs4 import BeautifulSoup
 import requests
 
+def proxy():
+    url = 'https://ip.cn/api/index?ip=&type=0'
+    username = 't17037773479161'
+    password = 'lhlnpdmj'
+    proxy = f"http://{username}:{password}@d842.kdltps.com:15818"
+    result = requests.get(url, proxies={
+        'http': proxy,
+        'https': proxy
+    })
+
+    ip = result.json()['ip']
+    print(ip)
+    return ip
+
 
 # 定义一个函数来解析HTML并提取所需字段
 def parse_html(html_data):
@@ -42,7 +56,7 @@ def found_data():
     # 读取 Excel 文件中的数据，获取 ID
     excel_path = r'E:\2023年\spider\search_id.xlsx'
     seach_id = pd.read_excel(excel_path)['ID']
-    time_code = random.randint(2,10)
+    time_code = random.randint(2,5)
     # 定义请求的 URL 和 headers
     url = "https://www.xiaohongshu.com/explore/"
     headers = {
@@ -57,11 +71,14 @@ def found_data():
     for index, keywords in enumerate(seach_id):
         print(f"请求ID：{keywords} ({index})")
         time.sleep(time_code)
-        response = requests.get(url + keywords, headers=headers)
+        username = 't17037773479161'
+        password = 'lhlnpdmj'
+        proxy = f"http://{username}:{password}@d842.kdltps.com:15818"
+        response = requests.get(url + keywords, headers=headers, proxies={'http': proxy,'https': proxy})
         if response.status_code == 200:
             html_data = response.text
             keywords, description, og_images = parse_html(html_data)
-
+            print(response.text)
             # 将提取的数据添加到结果列表中
             results.append({'标签': keywords, '文案内容': description,
                             **{f'og:image{i + 1}': img for i, img in enumerate(og_images)}})
