@@ -36,6 +36,7 @@ class DoressData:
         df.to_excel(excel_file_path, index=False)
         print(f"成功提取了 {len(ids)} 个 ID，并保存到了 '{excel_file_path}'。")
         # 保存到 Excel...
+        return ids
 
     @staticmethod
     def parse_html(html_data):
