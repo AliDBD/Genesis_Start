@@ -29,8 +29,7 @@ class DoressData:
             ids = []
 
         # 将 IDs 保存到 DataFrame 中
-        df = pd.DataFrame(ids)
-        #, columns=['ID']
+        df = pd.DataFrame(ids,columns=['ID'])
 
         # 将 DataFrame 保存到 Excel 文件中
         df.to_excel(excel_file_path, index=False)

@@ -10,6 +10,7 @@ import time
 import requests
 import random
 from bs4 import BeautifulSoup
+from xhs.DB_Connect import Connect
 
 class DoressData:
     # def __init__(self, json_file_path, excel_file_path):
@@ -36,6 +37,7 @@ class DoressData:
         df.to_excel(excel_file_path, index=False)
         print(f"成功提取了 {len(ids)} 个 ID，并保存到了 '{excel_file_path}'。")
         # 保存到 Excel...
+        Connect(ids)
         return ids
 
     @staticmethod

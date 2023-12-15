@@ -10,6 +10,7 @@
 
 import json
 import pandas as pd
+from xhs.DB_Connect import Connect
 
 def extract_ids_to_excel(json_file_path, excel_file_path):
     # 加载 JSON 数据
@@ -21,15 +22,12 @@ def extract_ids_to_excel(json_file_path, excel_file_path):
         ids = [item['id'] for item in json_data['data']['items']]
     else:
         ids = []
-
     # 将 IDs 保存到 DataFrame 中
-    df = pd.DataFrame(ids)
-    #columns=['ID']
-
+    df = pd.DataFrame(ids,columns=['ID'])
     # 将 DataFrame 保存到 Excel 文件中
     df.to_excel(excel_file_path, index=False)
-
     print(f"成功提取了 {len(ids)} 个 ID，并保存到了 '{excel_file_path}'。")
+    Connect(ids)
 
 # 使用示例
 json_file_path = 'E:\\2023年\\spider\\json.txt'  # JSON 文件的路径
