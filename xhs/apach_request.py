@@ -11,6 +11,7 @@ import requests
 import random
 from bs4 import BeautifulSoup
 from xhs.DB_Connect import Connect
+from xhs.DB_Connect import Save_data
 
 class DoressData:
     # def __init__(self, json_file_path, excel_file_path):
@@ -30,7 +31,7 @@ class DoressData:
             ids = []
 
         # 将 IDs 保存到 DataFrame 中
-        df = pd.DataFrame(ids)
+        df = pd.DataFrame(ids,columns=['ID'])
         #, columns=['ID']
 
         # 将 DataFrame 保存到 Excel 文件中
@@ -88,7 +89,8 @@ class DoressData:
             if response.status_code == 200:
                 html_data = response.text
                 keywords, description, og_images = DoressData.parse_html(html_data)
-                print(response.text)
+                Save_data(keywords, description, og_images)
+                #print(response.text)
                 # 将提取的数据添加到结果列表中
                 results.append({'标签': keywords, '文案内容': description,
                                 **{f'og:image{i + 1}': img for i, img in enumerate(og_images)}})
