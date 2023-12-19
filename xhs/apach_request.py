@@ -10,16 +10,16 @@ import time
 import requests
 import random
 from bs4 import BeautifulSoup
-from xhs.DB_Connect import Connect
-from xhs.DB_Connect import Save_data
+from xhs.DB_Connect import save_id
+from xhs.DB_Connect import save_data
+from xhs.DB_Connect import find_id
+
 
 class DoressData:
-    # def __init__(self, json_file_path, excel_file_path):
-    #     self.json_file_path = json_file_path
-    #     self.excel_file_path = excel_file_path
 
+    #解析JSON数据获取定向ID值
     @staticmethod
-    def extract_ids_to_excel(json_file_path,excel_file_path):
+    def extract_ids_to_excel(json_file_path):
         # 加载 JSON 数据
         with open(json_file_path, 'r', encoding='utf-8') as file:
             json_data = json.load(file)
@@ -29,18 +29,17 @@ class DoressData:
             ids = [item['id'] for item in json_data['data']['items']]
         else:
             ids = []
+        # # 将 IDs 保存到 DataFrame 中
+        # df = pd.DataFrame(ids,columns=['ID'])
+        # #, columns=['ID']
+        #
+        # # 将 DataFrame 保存到 Excel 文件中
+        # df.to_excel(excel_file_path, index=False)
+        # print(f"成功提取了 {len(ids)} 个 ID，并保存到了 '{excel_file_path}'。")
+        # # 保存到 Excel...
+        save_id(ids)
 
-        # 将 IDs 保存到 DataFrame 中
-        df = pd.DataFrame(ids,columns=['ID'])
-        #, columns=['ID']
-
-        # 将 DataFrame 保存到 Excel 文件中
-        df.to_excel(excel_file_path, index=False)
-        print(f"成功提取了 {len(ids)} 个 ID，并保存到了 '{excel_file_path}'。")
-        # 保存到 Excel...
-        Connect(ids)
-        return ids
-
+    #处理根据ID请求结果的html内容并解析数据
     @staticmethod
     def parse_html(html_data):
         soup = BeautifulSoup(html_data, 'html.parser')
@@ -65,8 +64,10 @@ class DoressData:
 
     def found_data(self):
         # 读取 Excel 文件中的数据，获取 ID
-        excel_path = r'E:\2023年\spider\search_id.xlsx'
-        seach_id = pd.read_excel(excel_path)['ID']
+        # excel_path = r'E:\2023年\spider\search_id.xlsx'
+        # seach_id = pd.read_excel(excel_path)['ID']
+        #从数据库获取id信息
+        search_id = find_id()
         time_code = random.randint(2, 5)
         # 定义请求的 URL 和 headers
         url = "https://www.xiaohongshu.com/explore/"
@@ -79,8 +80,8 @@ class DoressData:
         # 创建一个空列表来存储请求结果
         results = []
         # 遍历 Excel 文件中的 ID，发送请求并处理响应
-        for index, keywords in enumerate(seach_id):
-            print(f"请求ID：{keywords} ({index})")
+        for keywords in search_id():
+            print(f"请求ID：{keywords}")
             time.sleep(time_code)
             username = 't17037773479161'
             password = 'lhlnpdmj'
@@ -89,7 +90,7 @@ class DoressData:
             if response.status_code == 200:
                 html_data = response.text
                 keywords, description, og_images = DoressData.parse_html(html_data)
-                Save_data(keywords, description, og_images)
+                save_data(keywords, description, og_images)
                 #print(response.text)
                 # 将提取的数据添加到结果列表中
                 results.append({'标签': keywords, '文案内容': description,

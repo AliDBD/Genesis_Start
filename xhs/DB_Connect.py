@@ -37,7 +37,7 @@ db_password = os.environ.get('DB_PASSWORD')
 print('密码', db_password, '用户名', db_username)
 
 #将原始数据提取的ID储存到指定的表内
-def Connect(ids):
+def save_id(ids):
     try:
         # 建立数据库链接
         with pymysql.connect(
@@ -60,7 +60,7 @@ def Connect(ids):
         print(f"Faild to connect to mysql:{e}")
 
 #将最终数据写入到指定表内
-def Save_data(keywords, description, og_images):
+def save_data(keywords, description, og_images):
     try:
         # 建立数据库链接
         with pymysql.connect(
@@ -82,3 +82,23 @@ def Save_data(keywords, description, og_images):
                 print("数据写入数据库完成！")
     except pymysql.MySQLError as e:
         print(f"Faild to connect to mysql:{e}")
+
+def find_id():
+    try:
+        # 建立数据库链接
+        with pymysql.connect(
+                host='172.18.3.106',
+                user=f'{db_username}',
+                password=f'{db_password}',
+                database='test_ljy'
+        ) as conn:
+            # 创建一个Cursor对象来执行SQL
+            id_list = []
+            cursor = conn.cursor()
+            cursor.execute(f'SELECT search_id FROM `xhs_search`')
+            results = cursor.fetchall()
+            extracted_value = [item[0] for item in results]
+            print(extracted_value)
+    except pymysql.MySQLError as e:
+        print(f"Faild to connect to mysql:{e}")
+    return extracted_value
