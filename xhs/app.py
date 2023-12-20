@@ -11,6 +11,7 @@ import os
 import json
 # 创建Flask应用实例
 from xhs.id提取 import extract_ids_to_excel
+from xhs.apach_request import find_id
 
 app = Flask(__name__)
 
@@ -37,7 +38,7 @@ def upload_file():
         file.save(filename)
 
         # 调用函数处理文件
-        extract_ids_to_excel(filename)
+
 
         # 返回成功消息
         return 'File uploaded and processed successfully'

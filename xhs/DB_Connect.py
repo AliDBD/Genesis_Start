@@ -49,7 +49,7 @@ def save_id(ids):
             # 创建一个Cursor对象来执行SQL
             with conn.cursor() as cursor:
                 for id in ids:
-                    sql = f'insert into xhs_search (search_id) values ("{id}")'
+                    sql = f'insert into xhs_search (search_id,type) values ("{id}",1)'
                     # 执行SQL语句
                     print(sql)
                     cursor.execute(sql)
@@ -72,15 +72,16 @@ def save_data(keywords, description, og_images):
             # 创建一个Cursor对象来执行SQL
             with conn.cursor() as cursor:
                 og_images_str = ','.join(og_images)
-                sql = f'insert into xhs_json (label,Copywriting,image) values ("{keywords}", "{description}", "{og_images_str}")'
+                #1=外贸；2=情感；3=穿搭
+                sql = f'insert into xhs_json (label,Copywriting,image,type) values ("{keywords}", "{description}", "{og_images_str}", 1)'
                 # 执行SQL语句
-                print(sql)
+                print(f"执行的sql语句：{sql}")
                 cursor.execute(sql)
                 # 提交
                 conn.commit()
-                print(f"写入的值：{keywords,description,og_images}")
                 print("数据写入数据库完成！")
     except pymysql.MySQLError as e:
+        print("save_data方法写入错误！")
         print(f"Faild to connect to mysql:{e}")
 
 def find_id():
@@ -102,3 +103,44 @@ def find_id():
     except pymysql.MySQLError as e:
         print(f"Faild to connect to mysql:{e}")
     return extracted_value
+
+def clear_disdata():
+    try:
+        # 建立数据库链接
+        with pymysql.connect(
+                host='172.18.3.106',
+                user=f'{db_username}',
+                password=f'{db_password}',
+                database='test_ljy'
+        ) as conn:
+            # 创建一个Cursor对象来执行SQL
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM `xhs_json` WHERE Copywriting =''")
+            conn.commit()
+
+            cursor.close()
+            conn.close()
+            print("数据清理完成！")
+    except pymysql.MySQLError as e:
+        print(f"Faild to connect to mysql:{e}")
+
+#清空ID表
+def clear_sheet():
+    try:
+        # 建立数据库链接
+        with pymysql.connect(
+                host='172.18.3.106',
+                user=f'{db_username}',
+                password=f'{db_password}',
+                database='test_ljy'
+        ) as conn:
+            # 创建一个Cursor对象来执行SQL
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM xhs_search")
+            conn.commit()
+
+            cursor.close()
+            conn.close()
+            print("数据清理完成！")
+    except pymysql.MySQLError as e:
+        print(f"Faild to connect to mysql:{e}")

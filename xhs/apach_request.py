@@ -10,10 +10,10 @@ import time
 import requests
 import random
 from bs4 import BeautifulSoup
-from xhs.DB_Connect import save_id
+from xhs.DB_Connect import save_id, clear_sheet
 from xhs.DB_Connect import save_data
 from xhs.DB_Connect import find_id
-
+from xhs.DB_Connect import clear_disdata
 
 class DoressData:
 
@@ -37,7 +37,9 @@ class DoressData:
         # df.to_excel(excel_file_path, index=False)
         # print(f"成功提取了 {len(ids)} 个 ID，并保存到了 '{excel_file_path}'。")
         # # 保存到 Excel...
+        clear_sheet()
         save_id(ids)
+        return ids
 
     #处理根据ID请求结果的html内容并解析数据
     @staticmethod
@@ -67,8 +69,8 @@ class DoressData:
         # excel_path = r'E:\2023年\spider\search_id.xlsx'
         # seach_id = pd.read_excel(excel_path)['ID']
         #从数据库获取id信息
-        search_id = find_id()
-        time_code = random.randint(2, 5)
+        search_id = find_id
+        time_code = random.randint(3, 10)
         # 定义请求的 URL 和 headers
         url = "https://www.xiaohongshu.com/explore/"
         headers = {
@@ -80,24 +82,27 @@ class DoressData:
         # 创建一个空列表来存储请求结果
         results = []
         # 遍历 Excel 文件中的 ID，发送请求并处理响应
-        for keywords in search_id():
-            print(f"请求ID：{keywords}")
+        for reid in search_id():
+            print(f"请求ID：{reid}")
             time.sleep(time_code)
             username = 't17037773479161'
             password = 'lhlnpdmj'
             proxy = f"http://{username}:{password}@d842.kdltps.com:15818"
-            response = requests.get(url + keywords, headers=headers, proxies={'http': proxy, 'https': proxy})
+            url = url + reid
+            response = requests.get(url=url, headers=headers, proxies={'http': proxy, 'https': proxy})
             if response.status_code == 200:
                 html_data = response.text
                 keywords, description, og_images = DoressData.parse_html(html_data)
-                save_data(keywords, description, og_images)
                 #print(response.text)
                 # 将提取的数据添加到结果列表中
                 results.append({'标签': keywords, '文案内容': description,
-                                **{f'og:image{i + 1}': img for i, img in enumerate(og_images)}})
+                                **{f'og:image{i + 1}': img for i, img in enumerate(og_images)}, 'ID':reid})
                 print(f"响应内容：\n{html_data}\n")
+                save_data(keywords, description, og_images)
             else:
                 print(f"请求 {keywords} 失败，状态码： {response.status_code}")
+        #清除垃圾数据
+        clear_disdata()
         # 将结果列表返回
         return results
 
@@ -106,7 +111,7 @@ def main():
     excel_file_path = 'E:\\2023年\\spider\\search_id.xlsx'
     #创建一个实例
     doress_data = DoressData()
-    doress_data.extract_ids_to_excel(json_file_path,excel_file_path)
+    doress_data.extract_ids_to_excel(json_file_path)
     #获取数据并处理
     data_list = doress_data.found_data()
     df = pd.DataFrame(data_list)

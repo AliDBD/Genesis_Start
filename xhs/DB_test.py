@@ -30,5 +30,24 @@ def find_id():
         print(f"Faild to connect to mysql:{e}")
     return extracted_value
 
-ids=find_id()
-print(ids)
+def clear_disdata():
+    try:
+        # 建立数据库链接
+        with pymysql.connect(
+                host='172.18.3.106',
+                user=f'{db_username}',
+                password=f'{db_password}',
+                database='test_ljy'
+        ) as conn:
+            # 创建一个Cursor对象来执行SQL
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM `xhs_json` WHERE Copywriting =''")
+            conn.commit()
+
+            cursor.close()
+            conn.close()
+            print("数据清理完成！")
+    except pymysql.MySQLError as e:
+        print(f"Faild to connect to mysql:{e}")
+
+clear_disdata()
