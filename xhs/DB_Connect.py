@@ -60,7 +60,7 @@ def save_id(ids):
         print(f"Faild to connect to mysql:{e}")
 
 #将最终数据写入到指定表内
-def save_data(keywords, description, og_images):
+def save_data(keywords, description, og_images,reid):
     try:
         # 建立数据库链接
         with pymysql.connect(
@@ -73,7 +73,7 @@ def save_data(keywords, description, og_images):
             with conn.cursor() as cursor:
                 og_images_str = ','.join(og_images)
                 #1=外贸；2=情感；3=穿搭
-                sql = f'insert into xhs_json (label,Copywriting,image,type) values ("{keywords}", "{description}", "{og_images_str}", 1)'
+                sql = f'insert into xhs_json (label,Copywriting,image,type,shop_id) values ("{keywords}", "{description}", "{og_images_str}", 1,"{reid}")'
                 # 执行SQL语句
                 print(f"执行的sql语句：{sql}")
                 cursor.execute(sql)
@@ -99,7 +99,6 @@ def find_id():
             cursor.execute(f'SELECT search_id FROM `xhs_search`')
             results = cursor.fetchall()
             extracted_value = [item[0] for item in results]
-            print(extracted_value)
     except pymysql.MySQLError as e:
         print(f"Faild to connect to mysql:{e}")
     return extracted_value

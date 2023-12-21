@@ -29,14 +29,6 @@ class DoressData:
             ids = [item['id'] for item in json_data['data']['items']]
         else:
             ids = []
-        # # 将 IDs 保存到 DataFrame 中
-        # df = pd.DataFrame(ids,columns=['ID'])
-        # #, columns=['ID']
-        #
-        # # 将 DataFrame 保存到 Excel 文件中
-        # df.to_excel(excel_file_path, index=False)
-        # print(f"成功提取了 {len(ids)} 个 ID，并保存到了 '{excel_file_path}'。")
-        # # 保存到 Excel...
         clear_sheet()
         save_id(ids)
         return ids
@@ -45,7 +37,6 @@ class DoressData:
     @staticmethod
     def parse_html(html_data):
         soup = BeautifulSoup(html_data, 'html.parser')
-
         # 提取keywords和description
         keywords = soup.find('meta', attrs={'name': 'keywords'})
         if keywords is not None:
@@ -57,7 +48,6 @@ class DoressData:
             description = description['content']
         else:
             description = ""
-
         # 提取og:image
         og_images = soup.find_all('meta', attrs={'name': 'og:image'})
         og_image_values = [img['content'] for img in og_images]
@@ -65,12 +55,9 @@ class DoressData:
         return keywords, description, og_image_values
 
     def found_data(self):
-        # 读取 Excel 文件中的数据，获取 ID
-        # excel_path = r'E:\2023年\spider\search_id.xlsx'
-        # seach_id = pd.read_excel(excel_path)['ID']
         #从数据库获取id信息
         search_id = find_id
-        time_code = random.randint(3, 10)
+        time_code = random.randint(2, 15)
         # 定义请求的 URL 和 headers
         url = "https://www.xiaohongshu.com/explore/"
         headers = {
@@ -88,8 +75,7 @@ class DoressData:
             username = 't17037773479161'
             password = 'lhlnpdmj'
             proxy = f"http://{username}:{password}@d842.kdltps.com:15818"
-            url = url + reid
-            response = requests.get(url=url, headers=headers, proxies={'http': proxy, 'https': proxy})
+            response = requests.get(url+reid, headers=headers, proxies={'http': proxy, 'https': proxy})
             if response.status_code == 200:
                 html_data = response.text
                 keywords, description, og_images = DoressData.parse_html(html_data)
@@ -98,9 +84,9 @@ class DoressData:
                 results.append({'标签': keywords, '文案内容': description,
                                 **{f'og:image{i + 1}': img for i, img in enumerate(og_images)}, 'ID':reid})
                 print(f"响应内容：\n{html_data}\n")
-                save_data(keywords, description, og_images)
+                save_data(keywords, description, og_images,reid)
             else:
-                print(f"请求 {keywords} 失败，状态码： {response.status_code}")
+                print(f"请求 {reid} 失败，状态码： {response.status_code}")
         #清除垃圾数据
         clear_disdata()
         # 将结果列表返回

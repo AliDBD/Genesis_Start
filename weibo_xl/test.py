@@ -25,7 +25,6 @@ def extract_all_card_feed_text(file_path):
             extracted_texts.append(text)
 
     return extracted_texts
-
 # 调用函数
 json_file_path = 'E:\\2023年\\spider\\html.txt'
 extracted_texts = extract_all_card_feed_text(json_file_path)
