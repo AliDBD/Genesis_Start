@@ -1,14 +1,10 @@
 #!/usr/bin/env python
-
 # -- coding: utf-8 --
-
 # @Time : 2023/12/12 16:06
-
 # @Author : Genesis Ai
-
 # @File : 读取本地excel批量提取下载地址url.py
-import time
 
+import time
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
