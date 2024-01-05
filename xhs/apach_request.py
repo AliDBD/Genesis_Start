@@ -15,6 +15,7 @@ from xhs.DB_Connect import save_data
 from xhs.DB_Connect import find_id
 from xhs.DB_Connect import clear_disdata
 
+
 class DoressData:
 
     #解析JSON数据获取定向ID值
@@ -93,7 +94,7 @@ class DoressData:
         return results
 
 def main():
-    json_file_path = 'E:\\2023年\\spider\\json.txt'
+    json_file_path = 'E:\\2023年\\spider\\xhs_json.txt'
     excel_file_path = 'E:\\2023年\\spider\\search_id.xlsx'
     #创建一个实例
     doress_data = DoressData()
