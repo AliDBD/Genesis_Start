@@ -84,6 +84,7 @@ def save_data(keywords, description, og_images,reid):
         print("save_data方法写入错误！")
         print(f"Faild to connect to mysql:{e}")
 
+#查询表数据获取ID
 def find_id():
     try:
         # 建立数据库链接
