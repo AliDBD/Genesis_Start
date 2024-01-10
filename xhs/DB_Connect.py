@@ -72,8 +72,8 @@ def save_data(keywords, description, og_images,reid):
             # 创建一个Cursor对象来执行SQL
             with conn.cursor() as cursor:
                 og_images_str = ','.join(og_images)
-                #1=外贸；2=情感；3=穿搭
-                sql = f'insert into xhs_json (label,Copywriting,image,type,shop_id) values ("{keywords}", "{description}", "{og_images_str}", 1,"{reid}")'
+                #1=外贸；2=情感；3=穿搭;4=白领、职业形象
+                sql = f'insert into xhs_json (label,Copywriting,image,type,shop_id) values ("{keywords}", "{description}", "{og_images_str}", 4,"{reid}")'
                 # 执行SQL语句
                 print(f"执行的sql语句：{sql}")
                 cursor.execute(sql)

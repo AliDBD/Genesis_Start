@@ -5,7 +5,10 @@
 # @Author : Genesis Ai
 # @File : views.py
 
-from django.http import HttpResponse
+from django.shortcuts import render
 
-def Hello(request):
-    return HttpResponse('Hello World')
+def index(request):
+    context = {}
+    context["name"] = "Hello World"
+
+    return  render(request,"index.html",context)
