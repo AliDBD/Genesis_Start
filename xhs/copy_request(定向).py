@@ -1,0 +1,133 @@
+#!/usr/bin/env python
+
+# -- coding: utf-8 --
+# @Time : 2024/1/29 16:51
+# @Author : Genesis Ai
+# @File : copy_request(定向).py
+
+#!/usr/bin/env python
+# -- coding: utf-8 --
+# @Time : 2023/12/14 17:43
+# @Author : Genesis Ai
+# @File : data_request.py
+
+import json
+import pandas as pd
+import time
+import requests
+import random
+import re
+from bs4 import BeautifulSoup
+from xhs.DB_Connect import save_id, clear_sheet
+from xhs.DB_Connect import save_data
+from xhs.DB_Connect import find_id
+from xhs.DB_Connect import clear_disdata
+
+
+class DoressData:
+
+    #解析JSON数据获取定向ID值
+    # @staticmethod
+    # def extract_ids_to_excel(json_file_path):
+    #     # 加载 JSON 数据
+    #     with open(json_file_path, 'r', encoding='utf-8') as file:
+    #         json_data = json.load(file)
+    #
+    #     # 检查 'data' 和 'items' 键是否存在，并从中提取 IDs
+    #     if 'data' in json_data and 'items' in json_data['data'] and isinstance(json_data['data']['items'], list):
+    #         ids = [item['id'] for item in json_data['data']['items']]
+    #     else:
+    #         ids = []
+    #     clear_sheet()
+    #     save_id(ids)
+    #     return ids
+
+    #temp_id
+    @staticmethod
+    def extract_noteIds(file_path):
+        noteIds = []
+        pattern = r'\"noteId\":\"([^\"]+)\"'
+        with open(file_path, 'r',encoding='utf-8') as file:
+            for line in file:
+                matches = re.findall(pattern, line)
+                for match in matches:
+                    noteIds.append(match)
+        clear_sheet()
+        save_id(noteIds)
+        return noteIds
+
+    #处理根据ID请求结果的html内容并解析数据
+    @staticmethod
+    def parse_html(html_data):
+        soup = BeautifulSoup(html_data, 'html.parser')
+        # 提取keywords和description
+        keywords = soup.find('meta', attrs={'name': 'keywords'})
+        if keywords is not None:
+            keywords = keywords['content']
+        else:
+            keywords = ""
+        description = soup.find('meta', attrs={'name': 'description'})
+        if description is not None:
+            description = description['content']
+        else:
+            description = ""
+        # 提取og:image
+        og_images = soup.find_all('meta', attrs={'name': 'og:image'})
+        og_image_values = [img['content'] for img in og_images]
+
+        return keywords, description, og_image_values
+
+    def found_data(self):
+        #从数据库获取id信息
+        search_id = find_id
+        time_code = random.randint(2, 15)
+        # 定义请求的 URL 和 headers
+        url = "https://www.xiaohongshu.com/explore/"
+        headers = {
+            'User-Agent': 'AMozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': '*/*',
+            'Host': 'www.xiaohongshu.com',
+            'Connection': 'keep-alive'
+        }
+        # 创建一个空列表来存储请求结果
+        results = []
+        # 遍历 Excel 文件中的 ID，发送请求并处理响应
+        for reid in search_id():
+            print(f"请求ID：{reid}")
+            time.sleep(time_code)
+            username = 't17037773479161'
+            password = 'lhlnpdmj'
+            proxy = f"http://{username}:{password}@d842.kdltps.com:15818"
+            response = requests.get(url+reid, headers=headers, proxies={'http': proxy, 'https': proxy})
+            if response.status_code == 200:
+                html_data = response.text
+                keywords, description, og_images = DoressData.parse_html(html_data)
+                #print(response.text)
+                # 将提取的数据添加到结果列表中
+                results.append({'标签': keywords, '文案内容': description,
+                                **{f'og:image{i + 1}': img for i, img in enumerate(og_images)}, 'ID':reid})
+                print(f"响应内容：\n{html_data}\n")
+                save_data(keywords, description, og_images,reid)
+            else:
+                print(f"请求 {reid} 失败，状态码： {response.status_code}")
+        #清除垃圾数据
+        clear_disdata()
+        # 将结果列表返回
+        return results
+
+def main():
+    userid_file_path = ''
+    #json_file_path = 'E:\\2023年\\spider\\xhs_json.txt'
+    id_file_path = 'E:\\2023年\\spider\\user_html.txt'
+    #创建一个实例
+    doress_data = DoressData()
+    #doress_data.extract_ids_to_excel(id_file_path)
+    doress_data.extract_noteIds(id_file_path)
+    #获取数据并处理
+    data_list = doress_data.found_data()
+    df = pd.DataFrame(data_list)
+    df.to_excel('E:\\2023年\\spider\\temp_data.xlsx', index=False)
+
+
+if __name__ == '__main__':
+    main()
