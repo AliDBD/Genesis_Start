@@ -10,14 +10,13 @@ import time
 import requests
 import random
 from bs4 import BeautifulSoup
-from xhs.DB_Connect import save_id, clear_sheet
+from xhs.DB_Connect import apach_save_id, clear_sheet
 from xhs.DB_Connect import save_data
 from xhs.DB_Connect import find_id
 from xhs.DB_Connect import clear_disdata
 
 
 class DoressData:
-
     #解析JSON数据获取定向ID值
     @staticmethod
     def extract_ids_to_excel(json_file_path):
@@ -31,7 +30,7 @@ class DoressData:
         else:
             ids = []
         clear_sheet()
-        save_id(ids)
+        apach_save_id(ids)
         return ids
 
     #处理根据ID请求结果的html内容并解析数据

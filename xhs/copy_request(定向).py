@@ -17,44 +17,57 @@ import time
 import requests
 import random
 import re
+import http.client
 from bs4 import BeautifulSoup
-from xhs.DB_Connect import save_id, clear_sheet
+from xhs.DB_Connect import save_id
 from xhs.DB_Connect import save_data
-from xhs.DB_Connect import find_id
+from xhs.DB_Connect import find_id,find_userid
 from xhs.DB_Connect import clear_disdata
-
 
 class DoressData:
 
-    #解析JSON数据获取定向ID值
-    # @staticmethod
-    # def extract_ids_to_excel(json_file_path):
-    #     # 加载 JSON 数据
-    #     with open(json_file_path, 'r', encoding='utf-8') as file:
-    #         json_data = json.load(file)
-    #
-    #     # 检查 'data' 和 'items' 键是否存在，并从中提取 IDs
-    #     if 'data' in json_data and 'items' in json_data['data'] and isinstance(json_data['data']['items'], list):
-    #         ids = [item['id'] for item in json_data['data']['items']]
-    #     else:
-    #         ids = []
-    #     clear_sheet()
-    #     save_id(ids)
-    #     return ids
-
-    #temp_id
+    #获取定向博主的首页内容（html源码）
     @staticmethod
-    def extract_noteIds(file_path):
+    def ghome_html():
+        url = 'https://www.xiaohongshu.com/user/profile/'
+        headers = {
+            'User-Agent': 'Apifox/1.0.0 (https://apifox.com)',
+            'Accept': '*/*',
+            'Host': 'www.xiaohongshu.com',
+            'Connection': 'keep-alive'
+        }
+        time_code = random.randint(2,10)
+        userid_list=find_userid()
+        for id in userid_list:
+            print(f"请求用户ID：{id}")
+            time.sleep(time_code)
+            username = 't17037773479161'
+            password = 'lhlnpdmj'
+            proxy = f"http://{username}:{password}@d842.kdltps.com:15818"
+            response = requests.get(url + id, headers=headers, proxies={'http': proxy, 'https': proxy})
+            if response.status_code == 200:
+                html_data = response.text
+                print(f"返回数据体：{html_data}")
+                DoressData.extract_noteIds(html_data,id)
+
+    #根据博主首页源码信息解析出当前首页的ID储存到库
+    @staticmethod
+    def extract_noteIds(file_path,user_id):
+        print("html数据接收成功，开始解析ID***********！")
+        soup = BeautifulSoup(file_path, 'html.parser')
         noteIds = []
         pattern = r'\"noteId\":\"([^\"]+)\"'
-        with open(file_path, 'r',encoding='utf-8') as file:
-            for line in file:
-                matches = re.findall(pattern, line)
-                for match in matches:
-                    noteIds.append(match)
-        clear_sheet()
-        save_id(noteIds)
-        return noteIds
+        time.sleep(8)
+        matches = re.findall(pattern, str(soup))
+        for match in matches:
+            noteIds.append((match,user_id))
+
+        #去重
+        unique_noteIds = list(set(noteIds))
+        #将数据保存至数据库
+        save_id(unique_noteIds)
+        print(f"解析结果ID储存到数据库完成！{unique_noteIds}")
+
 
     #处理根据ID请求结果的html内容并解析数据
     @staticmethod
@@ -74,11 +87,55 @@ class DoressData:
         # 提取og:image
         og_images = soup.find_all('meta', attrs={'name': 'og:image'})
         og_image_values = [img['content'] for img in og_images]
+        #调用url_list方法转换地址
+        ret_og_image_values = DoressData.url_list(og_image_values)
 
-        return keywords, description, og_image_values
+        return keywords, description, ret_og_image_values
+
+    #调用张均利接口处理image地址
+    @staticmethod
+    def url_list(urllist):
+        formatted_list = []
+        # 检查 urllist 是否为字符串
+        if isinstance(urllist, str):
+            urls = urllist.split(',')
+        elif isinstance(urllist, list):
+            urls = urllist
+        else:
+            # urllist 既不是字符串也不是列表
+            raise ValueError("urllist must be either a string or a list")
+
+        for url in urls:
+            formatted_url = url.strip()
+            #print(formatted_url)
+
+            conn = http.client.HTTPSConnection("uatapiserver.chinagoods.com")
+            payload = json.dumps({
+                "urlList": [formatted_url]
+            })
+            headers = {
+                'User-Agent': 'Apifox/1.0.0 (https://apifox.com)',
+                'Content-Type': 'application/json',
+                'Accept': '*/*',
+                'Host': 'uatapiserver.chinagoods.com',
+                'Connection': 'keep-alive',
+            }
+            conn.request("POST", "/pms/v1/thirds/goods_pic/describe/change?pwd=makePicHappyLove", payload, headers)
+            res = conn.getresponse()
+            data = res.read()
+            source_url = data.decode('utf-8')
+            parsed_json = json.loads(source_url)
+            data_values = parsed_json.get('data',[])
+            url = data_values[0] if data_values else  None
+
+            #将转换结果的url储存到list
+            if url:
+                formatted_list.append(url)
+        return formatted_list
 
     def found_data(self):
         #从数据库获取id信息
+        print("开始获取数据库动态ID！！！！！")
         search_id = find_id
         time_code = random.randint(2, 15)
         # 定义请求的 URL 和 headers
@@ -101,13 +158,13 @@ class DoressData:
             response = requests.get(url+reid, headers=headers, proxies={'http': proxy, 'https': proxy})
             if response.status_code == 200:
                 html_data = response.text
-                keywords, description, og_images = DoressData.parse_html(html_data)
+                keywords, description, ret_og_image_values = DoressData.parse_html(html_data)
                 #print(response.text)
                 # 将提取的数据添加到结果列表中
                 results.append({'标签': keywords, '文案内容': description,
-                                **{f'og:image{i + 1}': img for i, img in enumerate(og_images)}, 'ID':reid})
+                                **{f'og:image{i + 1}': img for i, img in enumerate(ret_og_image_values)}, 'ID':reid})
                 print(f"响应内容：\n{html_data}\n")
-                save_data(keywords, description, og_images,reid)
+                save_data(keywords, description, ret_og_image_values,reid)
             else:
                 print(f"请求 {reid} 失败，状态码： {response.status_code}")
         #清除垃圾数据
@@ -116,18 +173,14 @@ class DoressData:
         return results
 
 def main():
-    userid_file_path = ''
-    #json_file_path = 'E:\\2023年\\spider\\xhs_json.txt'
-    id_file_path = 'E:\\2023年\\spider\\user_html.txt'
+
     #创建一个实例
     doress_data = DoressData()
-    #doress_data.extract_ids_to_excel(id_file_path)
-    doress_data.extract_noteIds(id_file_path)
+    doress_data.ghome_html()
     #获取数据并处理
     data_list = doress_data.found_data()
     df = pd.DataFrame(data_list)
     df.to_excel('E:\\2023年\\spider\\temp_data.xlsx', index=False)
-
 
 if __name__ == '__main__':
     main()

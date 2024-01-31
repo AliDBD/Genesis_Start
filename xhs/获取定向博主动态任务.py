@@ -8,28 +8,29 @@
 import pandas as pd
 import requests
 import re
-def get_html():
-    # 读取Excel文件并提取ID
-    file_path_excel = 'E:\\2023年\\spider\\userID.xlsx'
-    df = pd.read_excel(file_path_excel)
-    ids = df['ID'].tolist()  # 确保列名与您的文件匹配
+from bs4 import BeautifulSoup
+import time
+import random
 
-    # 基础URL
-    base_url = 'https://www.xiaohongshu.com/user/profile/'
-
-    # 用于存储响应HTML的文件路径
-    output_file = 'E:\\2023年\\spider\\user_html.txt'
-
-    # 对于每个ID，发起GET请求并保存响应
-    with open(output_file, 'w', encoding='utf-8') as file:
-        for user_id in ids:
-            response = requests.get(base_url + user_id)
-            if response.status_code == 200:
-                file.write(response.text + '\n\n')  # 将响应内容写入文件
-            else:
-                file.write(f'Failed to fetch data for ID {user_id}\n\n')
-
-    print("请求完成，响应已保存到文件。")
+def ghome_html():
+    url = 'https://www.xiaohongshu.com/user/profile/'
+    headers = {
+        'User-Agent': 'Apifox/1.0.0 (https://apifox.com)',
+        'Accept': '*/*',
+        'Host': 'www.xiaohongshu.com',
+        'Connection': 'keep-alive'
+    }
+    time_code = random.randint(2,10)
+    id = '55c7c08bf5a263301cf1c9b2'
+    print(f"请求ID：{id}")
+    time.sleep(time_code)
+    username = 't17037773479161'
+    password = 'lhlnpdmj'
+    proxy = f"http://{username}:{password}@d842.kdltps.com:15818"
+    response = requests.get(url + id, headers=headers, proxies={'http': proxy, 'https': proxy})
+    if response.status_code == 200:
+        html_data = response.text
+        print(html_data)
     #
     # @staticmethod
     # # 函数：从文件中读取并提取所有的noteId
@@ -52,4 +53,26 @@ def get_html():
     # # 输出提取到的noteId
     # print(noteIds)
 
-get_html()
+def new_id(file_path):
+    with open(file_path, 'r', encoding='utf-8') as file:
+        html_content = file.read()
+
+    soup = BeautifulSoup(html_content, 'html.parser')
+
+    note_id_pattern = r'"noteId":"(\w+)"'
+    note_ids = re.findall(note_id_pattern, str(soup))
+    print("Note IDs:", note_ids)  # 打印以检查note_ids
+
+    timestamp_pattern = r'"publishTime":(\d+)'
+    timestamps = re.findall(timestamp_pattern, str(soup))
+    print("Timestamps:", timestamps)  # 打印以检查timestamps
+
+    combined_list = list(zip(note_ids, timestamps))
+    combined_list.sort(key=lambda x: x[1], reverse=True)
+
+    most_recent_note_id = combined_list[0][0] if combined_list else None
+    print("Most recent note ID:", most_recent_note_id)  # 打印最新的noteId
+
+file_path = 'E:\\2023年\\spider\\error.txt'
+new_id(file_path)
+
