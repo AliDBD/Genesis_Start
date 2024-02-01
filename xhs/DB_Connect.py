@@ -203,6 +203,42 @@ def find_userid():
     except pymysql.MySQLError as e:
         print(f"find_userid.Faild to connect to mysql:{e}")
     return id_list
+
+
+def synchronous_userid():
+    try:
+        #建立数据库
+        with pymysql.connect(host='172.18.3.106',
+                user=f'{db_username}',
+                password=f'{db_password}',
+                database='test_ljy'
+        ) as conn:
+            #创建一个cursor对象执行sql
+            sql = '''
+            UPDATE xhs_json
+            SET xhs_json.user_id = (
+                SELECT xhs_search.user_id
+                FROM xhs_search
+                WHERE xhs_search.search_id = xhs_json.shop_id
+            )
+            WHERE EXISTS (
+                SELECT 1
+                FROM xhs_search
+                WHERE xhs_search.search_id = xhs_json.shop_id
+            )
+            '''
+            cursor = conn.cursor()
+            cursor.execute(sql)
+            cursor.commit()
+
+            #关闭链接
+            cursor.close()
+            conn.close()
+            print(f"user_id同步成功！")
+
+    except pymysql.MySQLError as e:
+        print(f"synchronous_userid.Fail to connect to mysql:{e}")
+
 # import pymysql
 # import os
 #

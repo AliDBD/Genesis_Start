@@ -22,7 +22,7 @@ from bs4 import BeautifulSoup
 from xhs.DB_Connect import save_id
 from xhs.DB_Connect import save_data
 from xhs.DB_Connect import find_id,find_userid
-from xhs.DB_Connect import clear_disdata
+from xhs.DB_Connect import clear_disdata,synchronous_userid
 
 class DoressData:
 
@@ -169,6 +169,8 @@ class DoressData:
                 print(f"请求 {reid} 失败，状态码： {response.status_code}")
         #清除垃圾数据
         clear_disdata()
+        #调用synchronous_userid方法同步xhs_json表的user_id
+        synchronous_userid()
         # 将结果列表返回
         return results
 
