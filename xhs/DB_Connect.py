@@ -145,6 +145,26 @@ def clear_sheet():
     except pymysql.MySQLError as e:
         print(f"clear_sheet.Faild to connect to mysql:{e}")
 
+#xhs_json表单根据shopID进行数据去重
+def dedupe_table():
+    try:
+        #建立数据库链接
+        with pymysql.connect(host='172.18.3.106',
+                user=f'{db_username}',
+                password=f'{db_password}',
+                database='test_ljy'
+        ) as conn:
+            #创建一个Cursor对象执行SQL
+            cursor = conn.cursor()
+            retdata = cursor.execute("SELECT DISTINCT shop_id FROM xhs_json")
+            conn.commit()
+
+            cursor.close()
+            conn.close()
+            print(f"清除xhs_json列表完成，返回数据：{retdata}")
+    except pymysql.MySQLError as e:
+        print(f"dedupe_table.Faild to connect to mysql:{e}")
+
 
 #博主ID遍历获取，储存到指定的库
 def store_values_in_database(id):
