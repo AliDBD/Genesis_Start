@@ -204,7 +204,7 @@ def find_userid():
         print(f"find_userid.Faild to connect to mysql:{e}")
     return id_list
 
-
+#user_id同步到xhs_json表单
 def synchronous_userid():
     try:
         #建立数据库

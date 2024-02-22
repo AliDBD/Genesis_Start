@@ -61,13 +61,11 @@ class DoressData:
         matches = re.findall(pattern, str(soup))
         for match in matches:
             noteIds.append((match,user_id))
-
-        #去重
+        #获取到的ID去重
         unique_noteIds = list(set(noteIds))
         #将数据保存至数据库
         save_id(unique_noteIds)
         print(f"解析结果ID储存到数据库完成！{unique_noteIds}")
-
 
     #处理根据ID请求结果的html内容并解析数据
     @staticmethod
