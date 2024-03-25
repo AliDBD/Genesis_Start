@@ -67,6 +67,7 @@ class DoressData:
             'Connection': 'keep-alive'
         }
         # 创建一个空列表来存储请求结果
+
         results = []
         # 遍历 Excel 文件中的 ID，发送请求并处理响应
         for reid in search_id():
