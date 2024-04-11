@@ -11,8 +11,10 @@ from bs4 import BeautifulSoup
 
 excel_path = r'E:\2023年\spider\index_url.xlsx'
 url_list = pd.read_excel(excel_path)["url"]
+
 #初始化一个列表来储存所有提取的href值
 all_href_values = []
+
 #遍历url列表
 for url in url_list:
     time.sleep(2)
@@ -31,6 +33,7 @@ for url in url_list:
     else:
         print(f"访问失败：{url}")
 df = pd.DataFrame(all_href_values,columns=['href'])
+
 #保存dataframe到excel文件中
 output_excel_path = f'E:/2023年/spider/href.xlsx'
 df.to_excel(output_excel_path,index = False)
