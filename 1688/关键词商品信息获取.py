@@ -9,6 +9,7 @@ import os
 import json
 import requests
 import pandas as pd
+from datetime import datetime
 
 def get_price_display(html_content):
     # 简单地从网页源代码中提取 "priceDisplay" 值
@@ -42,9 +43,9 @@ def extract_data_from_json_files(directory):
                             html_content = response.text
                             price_display = get_price_display(html_content)
                             data.append({
-                                'simpleSubject': simple_subject,
-                                'detailUrl': detail_url,
-                                'priceDisplay': price_display
+                                '名称': simple_subject,
+                                'url链接': detail_url,
+                                '价格（一般为阶梯价）': price_display
                             })
     return data
 
@@ -61,7 +62,8 @@ if __name__ == '__main__':
 
     extracted_data = extract_data_from_json_files(directory)
     if extracted_data:
-        output_file = os.path.join(directory, 'extracted_data.xlsx')
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_file = os.path.join(directory, f'extracted_data_{timestamp}.xlsx')
         save_data_to_excel(extracted_data, output_file)
         print(f"数据已保存到 {output_file}")
     else:
