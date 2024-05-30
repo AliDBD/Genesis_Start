@@ -1,3 +1,14 @@
+#!/usr/bin/env python
+
+# -- coding: utf-8 --
+# @Time : 2024/5/28 16:43
+# @Author : Genesis Ai
+# @File : path_商品信息获取.py
+'''
+此脚本仅用于本地固定格式json内容解析
+基于本地数据，无需网络服务.
+'''
+
 import os
 import json
 import pandas as pd
