@@ -4,6 +4,10 @@
 # @Time : 2024/5/28 16:43
 # @Author : Genesis Ai
 # @File : 关键词商品信息获取.py
+'''
+联网需求，设置代理目标
+不建议使用
+'''
 
 import os
 import json
