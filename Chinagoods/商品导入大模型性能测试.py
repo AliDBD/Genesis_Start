@@ -98,7 +98,8 @@ def main():
         futures = []
         while time.time() - start_time < test_duration:
             for i in range(num_requests):
-                origin_id = random.randint(10000, 50000)  # 生成一个在 10000 到 50000 之间的随机数
+                origin_data = random.randint(1888, 99999)
+                origin_id = f"8877919{origin_data}"
                 item = items[i % len(items)]  # 循环使用 items
                 cover_pic_list = [
                     item["imageUrl"].get("imgUrl"),
