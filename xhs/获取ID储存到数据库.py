@@ -15,9 +15,10 @@ def read_excel_and_get_ids(file_path):
     df = pd.read_excel(file_path)
 
     for index, row in df.iterrows():
-        id=row['ID']
-        store_values_in_database(id)
+        id=row['id']
+        xsec_token=row['xsec_token']
+        store_values_in_database(xsec_token,id)
     return id
 
-file_path = 'E:\\2023年\\spider\\userID.xlsx'  # 替换为你的Excel文件路径
+file_path = 'E:\\2023年\\spider\\userID.xlsx'
 ids = read_excel_and_get_ids(file_path)

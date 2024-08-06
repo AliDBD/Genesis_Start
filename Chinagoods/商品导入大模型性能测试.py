@@ -62,6 +62,8 @@ def model(token, origin_id, cover_pic_list, goods_title):
         "attribute": "",
         "dictName": "件",
         "salePriceType": 1,
+        "productTypeId":"1",
+        "productTypeName":'分类写入',
         "multistageJson": "",
         "salePrice": 799,
         "descPicList": [],
@@ -92,7 +94,7 @@ def main():
         return
 
     num_requests = 20  # 并发请求数
-    test_duration = 300  # 测试持续时间（秒）
+    test_duration = 5  # 测试持续时间（秒）
     start_time = time.time()
     with ThreadPoolExecutor(max_workers=num_requests) as executor:
         futures = []

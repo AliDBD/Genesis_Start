@@ -166,23 +166,43 @@ def dedupe_table():
         print(f"dedupe_table.Faild to connect to mysql:{e}")
 
 
-#博主ID遍历获取，储存到指定的库
-def store_values_in_database(id):
-    try:
-        with pymysql.connect(host='172.18.3.106',
-                user=f'{db_username}',
-                password=f'{db_password}',
-                database='test_ljy'
-        ) as conn:
-            sql = f'INSERT INTO `user` (user_id) VALUES ("{id}")'
-            print(sql)
-            curses = conn.cursor()
-            curses.execute(sql)
-            conn.commit()
-    except pymysql.MySQLError as e:
-        print(f"store_values_in_database.Faild to connect to mysql:{e}")
+#遍历获取需要的参数信息，储存到指定的库
+# def store_values_in_database(xsec_token,search_id):
+#     try:
+#         with pymysql.connect(host='172.18.3.106',
+#                 user=f'{db_username}',
+#                 password=f'{db_password}',
+#                 database='test_ljy'
+#         ) as conn:
+#             #sql = f'INSERT INTO `user` (user_id) VALUES ("{path}")'
+#             sql = f'INSERT INTO xhs_search (search_id, xsec_token) VALUES ({xsec_token}, {search_id})'
+#             print(sql)
+#             curses = conn.cursor()
+#             curses.execute(sql)
+#             conn.commit()
+#     except pymysql.MySQLError as e:
+#         print(f"store_values_in_database.Faild to connect to mysql:{e}")
 
     # 遍历列表并将值插入到数据库中
+
+def store_values_in_database(xsec_token, search_id):
+    try:
+        # 建立数据库连接
+        conn = pymysql.connect(host='172.18.3.106',
+                               user=db_username,
+                               password=db_password,
+                               database='test_ljy',
+                               cursorclass=pymysql.cursors.DictCursor)
+        try:
+            with conn.cursor() as cursor:
+                # 使用参数化查询来避免SQL注入
+                sql = 'INSERT INTO xhs_search (search_id, xsec_token) VALUES (%s, %s)'
+                cursor.execute(sql, (search_id, xsec_token))
+                conn.commit()  # 提交事务
+        finally:
+            conn.close()  # 确保即使发生错误也能关闭连接
+    except pymysql.MySQLError as e:
+        print(f"store_values_in_database.Failed to connect to MySQL: {e}")
 
 
 def find_userid():
@@ -192,52 +212,59 @@ def find_userid():
                 host='172.18.3.106',
                 user=f'{db_username}',
                 password=f'{db_password}',
-                database='test_ljy'
+                database='test_ljy',
+                cursorclass=pymysql.cursors.DictCursor
         ) as conn:
             # 创建一个Cursor对象来执行SQL
-            id_list = []
             cursor = conn.cursor()
-            cursor.execute(f'SELECT user_id FROM `user`')
-            results = cursor.fetchall()
-            id_list = [item[0] for item in results]
+            cursor.execute("SELECT search_id, xsec_token FROM xhs_search")
+            results = cursor.fetchall()  # 获取所有记录
     except pymysql.MySQLError as e:
         print(f"find_userid.Faild to connect to mysql:{e}")
-    return id_list
+    return results
 
 #user_id同步到xhs_json表单
 def synchronous_userid():
     try:
-        #建立数据库
-        with pymysql.connect(host='172.18.3.106',
-                user=f'{db_username}',
-                password=f'{db_password}',
-                database='test_ljy'
-        ) as conn:
-            #创建一个cursor对象执行sql
-            sql = '''
-            UPDATE xhs_json
-            SET xhs_json.user_id = (
-                SELECT xhs_search.user_id
-                FROM xhs_search
-                WHERE xhs_search.search_id = xhs_json.shop_id
-            )
-            WHERE EXISTS (
-                SELECT 1
-                FROM xhs_search
-                WHERE xhs_search.search_id = xhs_json.shop_id
-            )
-            '''
-            cursor = conn.cursor()
-            cursor.execute(sql)
-            cursor.commit()
+        # 建立数据库连接
+        conn = pymysql.connect(
+            host='172.18.3.106',
+            user=f'{db_username}',
+            password=f'{db_password}',
+            database='test_ljy'
+        )
 
-            #关闭链接
-            cursor.close()
-            conn.close()
-            print(f"user_id同步成功！")
+        # 使用 `with` 语句管理连接对象的上下文
+        with conn:
+            # 创建一个游标对象执行 SQL
+            with conn.cursor() as cursor:
+                sql = '''
+                UPDATE xhs_json
+                SET xhs_json.user_id = (
+                    SELECT xhs_search.user_id
+                    FROM xhs_search
+                    WHERE xhs_search.search_id = xhs_json.shop_id
+                )
+                WHERE EXISTS (
+                    SELECT 1
+                    FROM xhs_search
+                    WHERE xhs_search.search_id = xhs_json.shop_id
+                )
+                '''
+
+                # 执行 SQL 语句
+                cursor.execute(sql)
+
+                # 提交事务
+                conn.commit()
+
+                # 输出成功信息
+                print("user_id同步成功！")
 
     except pymysql.MySQLError as e:
-        print(f"synchronous_userid.Fail to connect to mysql:{e}")
+        # 捕获并输出 MySQL 错误
+        print(f"synchronous_userid. Failed to connect to MySQL: {e}")
+
 
 # import pymysql
 # import os

@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
 # -- coding: utf-8 --
-# @Time : 2024/1/29 16:51
+# @Time : 2024/8/6 10:59
 # @Author : Genesis Ai
-# @File : copy_request(定向).py
+# @File : 20240806更新.py
+#最新可用的定向爬取代码
 '''
 1、通过抓包的方法获取xhs站点的信息，接口返回数据v1/search/notes
 2、将notes接口返回的数据通过json格式化，保存到本地的json文件夹
@@ -23,8 +24,8 @@ import http.client
 from bs4 import BeautifulSoup
 from xhs.DB_Connect import save_id
 from xhs.DB_Connect import save_data
-from xhs.DB_Connect import find_id,find_userid
-from xhs.DB_Connect import clear_disdata,synchronous_userid
+from xhs.DB_Connect import find_id, find_userid
+from xhs.DB_Connect import clear_disdata, synchronous_userid
 
 class DoressData:
     @staticmethod
@@ -51,7 +52,7 @@ class DoressData:
         print(f"返回的token信息：{token}")
         return token
 
-    #获取定向博主的首页内容（html源码）
+    # 获取定向博主的首页内容（html源码）
     @staticmethod
     def ghome_html():
         url = 'https://www.xiaohongshu.com/explore/'
@@ -61,8 +62,8 @@ class DoressData:
             'Host': 'www.xiaohongshu.com',
             'Connection': 'keep-alive'
         }
-        time_code = random.randint(2,10)
-        userid_list=find_userid()
+        time_code = random.randint(2, 10)
+        userid_list = find_userid()
         for row in userid_list:
             search_id = row['search_id']
             xsec_token = row['xsec_token']
@@ -71,15 +72,15 @@ class DoressData:
             username = 't17037773479161'
             password = 'lhlnpdmj'
             proxy = f"http://{username}:{password}@d842.kdltps.com:15818"
-            response = requests.get(url = url + search_id + f'?xsec_token={xsec_token}&xsec_source=pc_search', headers=headers, proxies={'http': proxy, 'https': proxy})
+            response = requests.get(url=url + search_id + f'?xsec_token={xsec_token}&xsec_source=pc_search', headers=headers, proxies={'http': proxy, 'https': proxy})
             if response.status_code == 200:
                 html_data = response.text
                 print(f"返回数据体：{html_data}")
-                DoressData.extract_noteIds(html_data,id)
+                DoressData.extract_noteIds(html_data, search_id)
 
-    #根据博主首页源码信息解析出当前首页的ID储存到库
+    # 根据博主首页源码信息解析出当前首页的ID储存到库
     @staticmethod
-    def extract_noteIds(file_path,user_id):
+    def extract_noteIds(file_path, user_id):
         print("html数据接收成功，开始解析ID***********！")
         soup = BeautifulSoup(file_path, 'html.parser')
         noteIds = []
@@ -87,16 +88,16 @@ class DoressData:
         time.sleep(8)
         matches = re.findall(pattern, str(soup))
         for match in matches:
-            noteIds.append((match,user_id))
-        #获取到的ID去重
+            noteIds.append((match, user_id))
+        # 获取到的ID去重
         unique_noteIds = list(set(noteIds))
-        #将数据保存至数据库
+        # 将数据保存至数据库
         save_id(unique_noteIds)
         print(f"解析结果ID储存到数据库完成！{unique_noteIds}")
 
-    #处理根据ID请求结果的html内容并解析数据
+    # 处理根据ID请求结果的html内容并解析数据
     @staticmethod
-    def parse_html(html_data,token):
+    def parse_html(html_data, token):
         soup = BeautifulSoup(html_data, 'html.parser')
         # 提取keywords和description
         keywords = soup.find('meta', attrs={'name': 'keywords'})
@@ -114,17 +115,15 @@ class DoressData:
         urls = [tag['content'] for tag in meta_tags if 'content' in tag.attrs]
         print(f"提取的图片地址：{urls}")
 
-        # og_images = soup.find_all('meta', attrs={'name': 'og:image'})
-        # og_image_values = [img['content'] for img in og_images]
-        #调用url_list方法转换地址
-        ret_og_image_values = DoressData.url_list(urls,token)
+        # 调用url_list方法转换地址
+        ret_og_image_values = DoressData.url_list(urls, token)
         print(f"提取的图片地址列表{ret_og_image_values}")
 
         return keywords, description, ret_og_image_values
 
-    #调用张均利接口处理image地址
+    # 调用张均利接口处理image地址
     @staticmethod
-    def url_list(urllist,token):
+    def url_list(urllist, token):
         formatted_list = []
         # 检查 urllist 是否为字符串
         if isinstance(urllist, str):
@@ -136,7 +135,7 @@ class DoressData:
             raise ValueError("urllist must be either a string or a list")
         idrice = 0
         for url in urls:
-            idrice+=1
+            idrice += 1
             formatted_url = url.strip()
             print(f"开始转换第{idrice}个ULR请求转换：{url}")
             conn = http.client.HTTPSConnection("testapiserver.chinagoods.com")
@@ -149,7 +148,7 @@ class DoressData:
                 'Accept': '*/*',
                 'Host': 'uatapiserver.chinagoods.com',
                 'Connection': 'keep-alive',
-                'Authorization':f"Bearer {token}"
+                'Authorization': f"Bearer {token}"
             }
             # print(f"接口URL转换请求链接：{urllist}")
             print(f"请求token：Bearer {token}")
@@ -158,19 +157,19 @@ class DoressData:
             data = res.read()
             source_url = data.decode('utf-8')
             parsed_json = json.loads(source_url)
-            data_values = parsed_json.get('data',[])
-            url = data_values[0] if data_values else  None
-            #返回接口单个URL信息
+            data_values = parsed_json.get('data', [])
+            url = data_values[0] if data_values else None
+            # 返回接口单个URL信息
             print(f"处理完成的URL：{res}")
-            #将转换结果的url储存到list
+            # 将转换结果的url储存到list
             if url:
                 formatted_list.append(url)
         return formatted_list
 
     def found_data(self):
-        #从数据库获取id信息
+        # 从数据库获取id信息
         print("开始获取数据库动态ID！！！！！")
-        #获取Token
+        # 获取Token
         token = DoressData.login_token()
         time_code = random.randint(2, 15)
         # 定义请求的 URL 和 headers
@@ -199,27 +198,25 @@ class DoressData:
                 html_data = response.text
                 print(f"响应内容：\n{html_data}\n")
                 keywords, description, ret_og_image_values = DoressData.parse_html(html_data, token)
-                print(f"最终获取到要保存的数据：{keywords},image:{ret_og_image_values}")
-                # print(response.text)
+                print(f"最终获取到要保存的数据：{keywords}, image: {ret_og_image_values}")
                 # 将提取的数据添加到结果列表中
                 results.append({'标签': keywords, '文案内容': description,
                                 **{f'og:image{i + 1}': img for i, img in enumerate(ret_og_image_values)}, 'ID': search_id})
                 save_data(keywords, description, ret_og_image_values, search_id)
             else:
                 print(f"请求 {search_id} 失败，状态码： {response.status_code}")
-                # 清除垃圾数据
+            # 清除垃圾数据
             clear_disdata()
             # 调用synchronous_userid方法同步xhs_json表的user_id
             synchronous_userid()
-            # 将结果列表返回
+        # 将结果列表返回
         return results
 
 def main():
-
-    #创建一个实例
+    # 创建一个实例
     doress_data = DoressData()
-    #doress_data.ghome_html()
-    #获取数据并处理
+    # doress_data.ghome_html()
+    # 获取数据并处理
     data_list = doress_data.found_data()
     df = pd.DataFrame(data_list)
     df.to_excel('E:\\2023年\\spider\\temp_data.xlsx', index=False)
