@@ -161,7 +161,7 @@ class DoressData:
             data_values = parsed_json.get('data',[])
             url = data_values[0] if data_values else  None
             #返回接口单个URL信息
-            print(f"处理完成的URL：{res}")
+            print(f"处理完成的URL：{url}")
             #将转换结果的url储存到list
             if url:
                 formatted_list.append(url)
