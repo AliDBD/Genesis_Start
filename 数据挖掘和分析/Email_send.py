@@ -18,7 +18,7 @@ import logging  # 用于日志记录
 from datetime import datetime  # 用于获取当前时间
 
 # 配置日志记录
-logging.basicConfig(filename='E:\\untitled\\spider\\数据挖掘和分析\\stock_report.log', level=logging.DEBUG,
+logging.basicConfig(filename='E:\\PycharmProjects\\genesis_start\\数据挖掘和分析\\stock_report.log', level=logging.DEBUG,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
 # 股票代码和中文名称的映射

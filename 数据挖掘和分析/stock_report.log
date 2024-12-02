@@ -989,3 +989,416 @@ Date                                     ...
 2024-08-09 15:10:28,532 - INFO - Sending email...
 2024-08-09 15:10:29,947 - INFO - Email sent successfully!
 2024-08-09 15:10:29,947 - INFO - Script finished
+2024-08-13 15:13:25,980 - INFO - Script started
+2024-08-13 15:13:26,001 - INFO - Network is available.
+2024-08-13 15:13:26,001 - INFO - Fetching data for 600415.SS, attempt 1/3
+2024-08-13 15:13:26,002 - DEBUG - Entering history()
+2024-08-13 15:13:26,008 - DEBUG - ('CREATE TABLE IF NOT EXISTS "_kv" ("key" VARCHAR(255) NOT NULL PRIMARY KEY, "value" VARCHAR(255)) WITHOUT ROWID', [])
+2024-08-13 15:13:26,008 - DEBUG - ('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['600415.SS', 1, 0])
+2024-08-13 15:13:26,059 - DEBUG -  Entering history()
+2024-08-13 15:13:26,059 - DEBUG - 600415.SS: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2024-08-13 15:13:26,059 - DEBUG -   Entering get()
+2024-08-13 15:13:26,059 - DEBUG - url=https://query2.finance.yahoo.com/v8/finance/chart/600415.SS
+2024-08-13 15:13:26,059 - DEBUG - params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2024-08-13 15:13:26,059 - DEBUG -    Entering _get_cookie_and_crumb()
+2024-08-13 15:13:26,059 - DEBUG - cookie_mode = 'basic'
+2024-08-13 15:13:26,059 - DEBUG -     Entering _get_cookie_and_crumb_basic()
+2024-08-13 15:13:26,061 - DEBUG - ('CREATE TABLE IF NOT EXISTS "_cookieschema" ("strategy" VARCHAR(255) NOT NULL PRIMARY KEY, "fetch_date" DATETIME NOT NULL, "cookie_bytes" BLOB NOT NULL) WITHOUT ROWID', [])
+2024-08-13 15:13:26,061 - DEBUG - ('SELECT "t1"."strategy", "t1"."fetch_date", "t1"."cookie_bytes" FROM "_cookieschema" AS "t1" WHERE ("t1"."strategy" = ?) LIMIT ? OFFSET ?', ['basic', 1, 0])
+2024-08-13 15:13:26,064 - DEBUG - Starting new HTTPS connection (1): fc.yahoo.com:443
+2024-08-13 15:13:42,802 - ERROR - $600415.SS: possibly delisted; No price data found  (period=1d)
+2024-08-13 15:13:42,802 - DEBUG -  Exiting history()
+2024-08-13 15:13:42,802 - DEBUG - Exiting history()
+2024-08-13 15:13:42,803 - DEBUG - Raw data for 600415.SS: Empty DataFrame
+Columns: [Open, High, Low, Close, Adj Close, Volume]
+Index: []
+2024-08-13 15:13:42,803 - WARNING - No data found for 600415.SS
+2024-08-13 15:13:42,803 - INFO - Fetching data for 600415.SS, attempt 2/3
+2024-08-13 15:13:42,804 - DEBUG - Entering history()
+2024-08-13 15:13:42,804 - DEBUG - ('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['600415.SS', 1, 0])
+2024-08-13 15:13:42,804 - DEBUG -  Entering history()
+2024-08-13 15:13:42,805 - DEBUG - 600415.SS: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2024-08-13 15:13:42,805 - DEBUG -   Entering get()
+2024-08-13 15:13:42,805 - DEBUG - url=https://query2.finance.yahoo.com/v8/finance/chart/600415.SS
+2024-08-13 15:13:42,805 - DEBUG - params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2024-08-13 15:13:42,805 - DEBUG -    Entering _get_cookie_and_crumb()
+2024-08-13 15:13:42,805 - DEBUG - cookie_mode = 'basic'
+2024-08-13 15:13:42,805 - DEBUG -     Entering _get_cookie_and_crumb_basic()
+2024-08-13 15:13:42,805 - DEBUG - ('SELECT "t1"."strategy", "t1"."fetch_date", "t1"."cookie_bytes" FROM "_cookieschema" AS "t1" WHERE ("t1"."strategy" = ?) LIMIT ? OFFSET ?', ['basic', 1, 0])
+2024-08-13 15:13:42,807 - DEBUG - Starting new HTTPS connection (2): fc.yahoo.com:443
+2024-08-13 15:13:58,488 - ERROR - $600415.SS: possibly delisted; No price data found  (period=1d)
+2024-08-13 15:13:58,488 - DEBUG -  Exiting history()
+2024-08-13 15:13:58,489 - DEBUG - Exiting history()
+2024-08-13 15:13:58,489 - DEBUG - Raw data for 600415.SS: Empty DataFrame
+Columns: [Open, High, Low, Close, Adj Close, Volume]
+Index: []
+2024-08-13 15:13:58,489 - WARNING - No data found for 600415.SS
+2024-08-13 15:13:58,489 - INFO - Fetching data for 600415.SS, attempt 3/3
+2024-08-13 15:13:58,489 - DEBUG - Entering history()
+2024-08-13 15:13:58,489 - DEBUG - ('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['600415.SS', 1, 0])
+2024-08-13 15:13:58,489 - DEBUG -  Entering history()
+2024-08-13 15:13:58,489 - DEBUG - 600415.SS: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2024-08-13 15:13:58,489 - DEBUG -   Entering get()
+2024-08-13 15:13:58,489 - DEBUG - url=https://query2.finance.yahoo.com/v8/finance/chart/600415.SS
+2024-08-13 15:13:58,489 - DEBUG - params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2024-08-13 15:13:58,489 - DEBUG -    Entering _get_cookie_and_crumb()
+2024-08-13 15:13:58,489 - DEBUG - cookie_mode = 'basic'
+2024-08-13 15:13:58,489 - DEBUG -     Entering _get_cookie_and_crumb_basic()
+2024-08-13 15:13:58,490 - DEBUG - ('SELECT "t1"."strategy", "t1"."fetch_date", "t1"."cookie_bytes" FROM "_cookieschema" AS "t1" WHERE ("t1"."strategy" = ?) LIMIT ? OFFSET ?', ['basic', 1, 0])
+2024-08-13 15:13:58,490 - DEBUG - Starting new HTTPS connection (3): fc.yahoo.com:443
+2024-08-13 15:14:14,206 - ERROR - $600415.SS: possibly delisted; No price data found  (period=1d)
+2024-08-13 15:14:14,207 - DEBUG -  Exiting history()
+2024-08-13 15:14:14,207 - DEBUG - Exiting history()
+2024-08-13 15:14:14,207 - DEBUG - Raw data for 600415.SS: Empty DataFrame
+Columns: [Open, High, Low, Close, Adj Close, Volume]
+Index: []
+2024-08-13 15:14:14,207 - WARNING - No data found for 600415.SS
+2024-08-13 15:14:14,207 - DEBUG - Fetched info for 600415.SS: None
+2024-08-13 15:14:14,207 - INFO - Fetching data for 600988.SS, attempt 1/3
+2024-08-13 15:14:14,207 - DEBUG - Entering history()
+2024-08-13 15:14:14,207 - DEBUG - ('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['600988.SS', 1, 0])
+2024-08-13 15:14:14,208 - DEBUG -  Entering history()
+2024-08-13 15:14:14,208 - DEBUG - 600988.SS: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2024-08-13 15:14:14,208 - DEBUG -   Entering get()
+2024-08-13 15:14:14,208 - DEBUG - url=https://query2.finance.yahoo.com/v8/finance/chart/600988.SS
+2024-08-13 15:14:14,208 - DEBUG - params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2024-08-13 15:14:14,208 - DEBUG -    Entering _get_cookie_and_crumb()
+2024-08-13 15:14:14,208 - DEBUG - cookie_mode = 'basic'
+2024-08-13 15:14:14,208 - DEBUG -     Entering _get_cookie_and_crumb_basic()
+2024-08-13 15:14:14,208 - DEBUG - ('SELECT "t1"."strategy", "t1"."fetch_date", "t1"."cookie_bytes" FROM "_cookieschema" AS "t1" WHERE ("t1"."strategy" = ?) LIMIT ? OFFSET ?', ['basic', 1, 0])
+2024-08-13 15:14:14,209 - DEBUG - Starting new HTTPS connection (4): fc.yahoo.com:443
+2024-08-13 15:14:16,358 - DEBUG - https://fc.yahoo.com:443 "GET / HTTP/1.1" 404 4744
+2024-08-13 15:14:31,415 - ERROR - $600988.SS: possibly delisted; No price data found  (period=1d)
+2024-08-13 15:14:31,415 - DEBUG -  Exiting history()
+2024-08-13 15:14:31,415 - DEBUG - Exiting history()
+2024-08-13 15:14:31,415 - DEBUG - Raw data for 600988.SS: Empty DataFrame
+Columns: [Open, High, Low, Close, Adj Close, Volume]
+Index: []
+2024-08-13 15:14:31,415 - WARNING - No data found for 600988.SS
+2024-08-13 15:14:31,415 - INFO - Fetching data for 600988.SS, attempt 2/3
+2024-08-13 15:14:31,415 - DEBUG - Entering history()
+2024-08-13 15:14:31,416 - DEBUG - ('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['600988.SS', 1, 0])
+2024-08-13 15:14:31,416 - DEBUG -  Entering history()
+2024-08-13 15:14:31,416 - DEBUG - 600988.SS: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2024-08-13 15:14:31,416 - DEBUG -   Entering get()
+2024-08-13 15:14:31,416 - DEBUG - url=https://query2.finance.yahoo.com/v8/finance/chart/600988.SS
+2024-08-13 15:14:31,416 - DEBUG - params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2024-08-13 15:14:31,416 - DEBUG -    Entering _get_cookie_and_crumb()
+2024-08-13 15:14:31,416 - DEBUG - cookie_mode = 'basic'
+2024-08-13 15:14:31,416 - DEBUG -     Entering _get_cookie_and_crumb_basic()
+2024-08-13 15:14:31,416 - DEBUG - ('SELECT "t1"."strategy", "t1"."fetch_date", "t1"."cookie_bytes" FROM "_cookieschema" AS "t1" WHERE ("t1"."strategy" = ?) LIMIT ? OFFSET ?', ['basic', 1, 0])
+2024-08-13 15:14:31,417 - DEBUG - Resetting dropped connection: fc.yahoo.com
+2024-08-13 15:14:32,328 - DEBUG - https://fc.yahoo.com:443 "GET / HTTP/1.1" 404 4744
+2024-08-13 15:14:32,345 - DEBUG - response.cookies = None
+2024-08-13 15:14:32,346 - DEBUG - ('SELECT "t1"."strategy", "t1"."fetch_date", "t1"."cookie_bytes" FROM "_cookieschema" AS "t1" WHERE ("t1"."strategy" = ?) LIMIT ? OFFSET ?', ['basic', 1, 0])
+2024-08-13 15:14:32,556 - DEBUG - https://fc.yahoo.com:443 "GET / HTTP/1.1" 404 4744
+2024-08-13 15:14:32,569 - DEBUG - response.cookies = None
+2024-08-13 15:14:32,569 - DEBUG -     Exiting _get_cookie_and_crumb_basic()
+2024-08-13 15:14:32,569 - DEBUG - toggling cookie strategy basic -> csrf
+2024-08-13 15:14:32,569 - DEBUG -     Entering _get_crumb_csrf()
+2024-08-13 15:14:32,569 - DEBUG - ('SELECT "t1"."strategy", "t1"."fetch_date", "t1"."cookie_bytes" FROM "_cookieschema" AS "t1" WHERE ("t1"."strategy" = ?) LIMIT ? OFFSET ?', ['csrf', 1, 0])
+2024-08-13 15:14:32,570 - DEBUG - Starting new HTTPS connection (1): guce.yahoo.com:443
+2024-08-13 15:14:49,326 - ERROR - $600988.SS: possibly delisted; No price data found  (period=1d)
+2024-08-13 15:14:49,326 - DEBUG -  Exiting history()
+2024-08-13 15:14:49,326 - DEBUG - Exiting history()
+2024-08-13 15:14:49,327 - DEBUG - Raw data for 600988.SS: Empty DataFrame
+Columns: [Open, High, Low, Close, Adj Close, Volume]
+Index: []
+2024-08-13 15:14:49,327 - WARNING - No data found for 600988.SS
+2024-08-13 15:14:49,327 - INFO - Fetching data for 600988.SS, attempt 3/3
+2024-08-13 15:14:49,327 - DEBUG - Entering history()
+2024-08-13 15:14:49,327 - DEBUG - ('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['600988.SS', 1, 0])
+2024-08-13 15:14:49,327 - DEBUG -  Entering history()
+2024-08-13 15:14:49,327 - DEBUG - 600988.SS: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2024-08-13 15:14:49,327 - DEBUG -   Entering get()
+2024-08-13 15:14:49,327 - DEBUG - url=https://query2.finance.yahoo.com/v8/finance/chart/600988.SS
+2024-08-13 15:14:49,327 - DEBUG - params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2024-08-13 15:14:49,327 - DEBUG -    Entering _get_cookie_and_crumb()
+2024-08-13 15:14:49,328 - DEBUG - cookie_mode = 'csrf'
+2024-08-13 15:14:49,328 - DEBUG -     Entering _get_crumb_csrf()
+2024-08-13 15:14:49,328 - DEBUG - ('SELECT "t1"."strategy", "t1"."fetch_date", "t1"."cookie_bytes" FROM "_cookieschema" AS "t1" WHERE ("t1"."strategy" = ?) LIMIT ? OFFSET ?', ['csrf', 1, 0])
+2024-08-13 15:14:49,329 - DEBUG - Starting new HTTPS connection (2): guce.yahoo.com:443
+2024-08-13 15:14:50,682 - DEBUG - https://guce.yahoo.com:443 "GET /consent HTTP/1.1" 302 0
+2024-08-13 15:14:50,685 - DEBUG - Starting new HTTPS connection (1): www.yahoo.com:443
+2024-08-13 15:15:06,878 - ERROR - $600988.SS: possibly delisted; No price data found  (period=1d)
+2024-08-13 15:15:06,878 - DEBUG -  Exiting history()
+2024-08-13 15:15:06,878 - DEBUG - Exiting history()
+2024-08-13 15:15:06,878 - DEBUG - Raw data for 600988.SS: Empty DataFrame
+Columns: [Open, High, Low, Close, Adj Close, Volume]
+Index: []
+2024-08-13 15:15:06,878 - WARNING - No data found for 600988.SS
+2024-08-13 15:15:06,878 - DEBUG - Fetched info for 600988.SS: None
+2024-08-13 15:15:06,878 - INFO - Fetching data for 002142.SZ, attempt 1/3
+2024-08-13 15:15:06,878 - DEBUG - Entering history()
+2024-08-13 15:15:06,879 - DEBUG - ('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['002142.SZ', 1, 0])
+2024-08-13 15:15:06,879 - DEBUG -  Entering history()
+2024-08-13 15:15:06,879 - DEBUG - 002142.SZ: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2024-08-13 15:15:06,879 - DEBUG -   Entering get()
+2024-08-13 15:15:06,879 - DEBUG - url=https://query2.finance.yahoo.com/v8/finance/chart/002142.SZ
+2024-08-13 15:15:06,879 - DEBUG - params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2024-08-13 15:15:06,879 - DEBUG -    Entering _get_cookie_and_crumb()
+2024-08-13 15:15:06,879 - DEBUG - cookie_mode = 'csrf'
+2024-08-13 15:15:06,879 - DEBUG -     Entering _get_crumb_csrf()
+2024-08-13 15:15:06,879 - DEBUG - ('SELECT "t1"."strategy", "t1"."fetch_date", "t1"."cookie_bytes" FROM "_cookieschema" AS "t1" WHERE ("t1"."strategy" = ?) LIMIT ? OFFSET ?', ['csrf', 1, 0])
+2024-08-13 15:15:07,189 - DEBUG - https://guce.yahoo.com:443 "GET /consent HTTP/1.1" 302 0
+2024-08-13 15:15:07,190 - DEBUG - Starting new HTTPS connection (2): www.yahoo.com:443
+2024-08-13 15:15:22,707 - ERROR - $002142.SZ: possibly delisted; No price data found  (period=1d)
+2024-08-13 15:15:22,707 - DEBUG -  Exiting history()
+2024-08-13 15:15:22,707 - DEBUG - Exiting history()
+2024-08-13 15:15:22,708 - DEBUG - Raw data for 002142.SZ: Empty DataFrame
+Columns: [Open, High, Low, Close, Adj Close, Volume]
+Index: []
+2024-08-13 15:15:22,708 - WARNING - No data found for 002142.SZ
+2024-08-13 15:15:22,708 - INFO - Fetching data for 002142.SZ, attempt 2/3
+2024-08-13 15:15:22,708 - DEBUG - Entering history()
+2024-08-13 15:15:22,708 - DEBUG - ('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['002142.SZ', 1, 0])
+2024-08-13 15:15:22,708 - DEBUG -  Entering history()
+2024-08-13 15:15:22,708 - DEBUG - 002142.SZ: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2024-08-13 15:15:22,708 - DEBUG -   Entering get()
+2024-08-13 15:15:22,708 - DEBUG - url=https://query2.finance.yahoo.com/v8/finance/chart/002142.SZ
+2024-08-13 15:15:22,708 - DEBUG - params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2024-08-13 15:15:22,708 - DEBUG -    Entering _get_cookie_and_crumb()
+2024-08-13 15:15:22,708 - DEBUG - cookie_mode = 'csrf'
+2024-08-13 15:15:22,708 - DEBUG -     Entering _get_crumb_csrf()
+2024-08-13 15:15:22,708 - DEBUG - ('SELECT "t1"."strategy", "t1"."fetch_date", "t1"."cookie_bytes" FROM "_cookieschema" AS "t1" WHERE ("t1"."strategy" = ?) LIMIT ? OFFSET ?', ['csrf', 1, 0])
+2024-08-13 15:15:23,016 - DEBUG - https://guce.yahoo.com:443 "GET /consent HTTP/1.1" 302 0
+2024-08-13 15:15:23,018 - DEBUG - Starting new HTTPS connection (3): www.yahoo.com:443
+2024-08-13 15:15:24,421 - DEBUG - https://www.yahoo.com:443 "GET /?guccounter=1 HTTP/1.1" 200 None
+2024-08-13 15:15:24,839 - DEBUG - Failed to find "csrfToken" in response
+2024-08-13 15:15:24,840 - DEBUG -     Exiting _get_crumb_csrf()
+2024-08-13 15:15:24,840 - DEBUG - toggling cookie strategy csrf -> basic
+2024-08-13 15:15:24,840 - DEBUG -     Entering _get_cookie_and_crumb_basic()
+2024-08-13 15:15:24,840 - DEBUG - ('SELECT "t1"."strategy", "t1"."fetch_date", "t1"."cookie_bytes" FROM "_cookieschema" AS "t1" WHERE ("t1"."strategy" = ?) LIMIT ? OFFSET ?', ['basic', 1, 0])
+2024-08-13 15:15:25,051 - DEBUG - https://fc.yahoo.com:443 "GET / HTTP/1.1" 404 4744
+2024-08-13 15:15:25,061 - DEBUG - ('DELETE FROM "_cookieschema" WHERE ("_cookieschema"."strategy" = ?)', ['basic'])
+2024-08-13 15:15:25,073 - DEBUG - ('BEGIN', None)
+2024-08-13 15:15:25,074 - DEBUG - ('INSERT INTO "_cookieschema" ("strategy", "fetch_date", "cookie_bytes") VALUES (?, ?, ?)', ['basic', '2024-08-13T15:15:25.074967', <memory at 0x000001F4D80F2F80>])
+2024-08-13 15:15:25,075 - DEBUG - fetched basic cookie = <Cookie A3=d=AQABBA0Iu2YCEPfR3h3JhdN5V7qimFWSJLIFEgEBAQFZvGbEZtw40iMA_eMAAA&S=AQAAAoimZotSeWRa_Y_IO9OWftY for .yahoo.com/>
+2024-08-13 15:15:25,075 - DEBUG - reusing cookie
+2024-08-13 15:15:25,077 - DEBUG - Starting new HTTPS connection (1): query1.finance.yahoo.com:443
+2024-08-13 15:15:26,339 - DEBUG - https://query1.finance.yahoo.com:443 "GET /v1/test/getcrumb HTTP/1.1" 401 90
+2024-08-13 15:15:26,340 - DEBUG - crumb = '{"finance":{"result":null,"error":{"code":"Unauthorized","description":"Invalid Cookie"}}}'
+2024-08-13 15:15:26,340 - DEBUG -     Exiting _get_cookie_and_crumb_basic()
+2024-08-13 15:15:26,340 - DEBUG -    Exiting _get_cookie_and_crumb()
+2024-08-13 15:15:26,341 - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2024-08-13 15:15:27,327 - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/002142.SZ?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=%7B%22finance%22%3A%7B%22result%22%3Anull%2C%22error%22%3A%7B%22code%22%3A%22Unauthorized%22%2C%22description%22%3A%22Invalid+Cookie%22%7D%7D%7D HTTP/1.1" 200 1207
+2024-08-13 15:15:27,328 - DEBUG - response code=200
+2024-08-13 15:15:27,328 - DEBUG -   Exiting get()
+2024-08-13 15:15:27,331 - DEBUG - 002142.SZ: yfinance received OHLC data: 2024-08-13 07:00:00 -> 2024-08-13 07:00:00
+2024-08-13 15:15:27,337 - DEBUG - 002142.SZ: OHLC after cleaning: 2024-08-13 15:00:00+08:00 -> 2024-08-13 15:00:00+08:00
+2024-08-13 15:15:27,342 - DEBUG - 002142.SZ: OHLC after combining events: 2024-08-13 00:00:00+08:00 -> 2024-08-13 00:00:00+08:00
+2024-08-13 15:15:27,351 - DEBUG - 002142.SZ: yfinance returning OHLC: 2024-08-13 00:00:00+08:00 -> 2024-08-13 00:00:00+08:00
+2024-08-13 15:15:27,351 - DEBUG -  Exiting history()
+2024-08-13 15:15:27,352 - DEBUG - Exiting history()
+2024-08-13 15:15:27,358 - DEBUG - Raw data for 002142.SZ:                                 Open       High  ...  Dividends  Stock Splits
+Date                                             ...                         
+2024-08-13 00:00:00+08:00  20.879999  20.459999  ...        0.0           0.0
+
+[1 rows x 7 columns]
+2024-08-13 15:15:27,358 - INFO - Successfully fetched data for 002142.SZ
+2024-08-13 15:15:27,358 - DEBUG - Fetched info for 002142.SZ: {'ticker': '002142.SZ', 'name': '宁波银行', 'open': np.float64(20.8799991607666), 'close': np.float64(20.299999237060547), 'change': np.float64(-0.5799999237060547)}
+2024-08-13 15:15:27,359 - INFO - Fetching data for 002497.SZ, attempt 1/3
+2024-08-13 15:15:27,359 - DEBUG - Entering history()
+2024-08-13 15:15:27,359 - DEBUG - ('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['002497.SZ', 1, 0])
+2024-08-13 15:15:27,360 - DEBUG -  Entering history()
+2024-08-13 15:15:27,360 - DEBUG - 002497.SZ: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2024-08-13 15:15:27,360 - DEBUG -   Entering get()
+2024-08-13 15:15:27,360 - DEBUG - url=https://query2.finance.yahoo.com/v8/finance/chart/002497.SZ
+2024-08-13 15:15:27,360 - DEBUG - params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2024-08-13 15:15:27,360 - DEBUG -    Entering _get_cookie_and_crumb()
+2024-08-13 15:15:27,360 - DEBUG - cookie_mode = 'basic'
+2024-08-13 15:15:27,360 - DEBUG -     Entering _get_cookie_and_crumb_basic()
+2024-08-13 15:15:27,360 - DEBUG - reusing cookie
+2024-08-13 15:15:27,360 - DEBUG - reusing crumb
+2024-08-13 15:15:27,360 - DEBUG -     Exiting _get_cookie_and_crumb_basic()
+2024-08-13 15:15:27,360 - DEBUG -    Exiting _get_cookie_and_crumb()
+2024-08-13 15:15:27,635 - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/002497.SZ?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=%7B%22finance%22%3A%7B%22result%22%3Anull%2C%22error%22%3A%7B%22code%22%3A%22Unauthorized%22%2C%22description%22%3A%22Invalid+Cookie%22%7D%7D%7D HTTP/1.1" 200 1208
+2024-08-13 15:15:27,643 - DEBUG - response code=200
+2024-08-13 15:15:27,643 - DEBUG -   Exiting get()
+2024-08-13 15:15:27,644 - DEBUG - 002497.SZ: yfinance received OHLC data: 2024-08-13 07:00:01 -> 2024-08-13 07:00:01
+2024-08-13 15:15:27,645 - DEBUG - 002497.SZ: OHLC after cleaning: 2024-08-13 15:00:01+08:00 -> 2024-08-13 15:00:01+08:00
+2024-08-13 15:15:27,647 - DEBUG - 002497.SZ: OHLC after combining events: 2024-08-13 00:00:00+08:00 -> 2024-08-13 00:00:00+08:00
+2024-08-13 15:15:27,650 - DEBUG - 002497.SZ: yfinance returning OHLC: 2024-08-13 00:00:00+08:00 -> 2024-08-13 00:00:00+08:00
+2024-08-13 15:15:27,650 - DEBUG -  Exiting history()
+2024-08-13 15:15:27,650 - DEBUG - Exiting history()
+2024-08-13 15:15:27,654 - DEBUG - Raw data for 002497.SZ:                            Open  High  Low  ...   Volume  Dividends  Stock Splits
+Date                                        ...                                  
+2024-08-13 00:00:00+08:00  8.72   8.7  8.4  ...  9164400        0.0           0.0
+
+[1 rows x 7 columns]
+2024-08-13 15:15:27,655 - INFO - Successfully fetched data for 002497.SZ
+2024-08-13 15:15:27,655 - DEBUG - Fetched info for 002497.SZ: {'ticker': '002497.SZ', 'name': '雅化集团', 'open': np.float64(8.720000267028809), 'close': np.float64(8.630000114440918), 'change': np.float64(-0.09000015258789062)}
+2024-08-13 15:15:27,655 - INFO - Fetching data for 002459.SZ, attempt 1/3
+2024-08-13 15:15:27,655 - DEBUG - Entering history()
+2024-08-13 15:15:27,655 - DEBUG - ('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['002459.SZ', 1, 0])
+2024-08-13 15:15:27,656 - DEBUG -  Entering history()
+2024-08-13 15:15:27,656 - DEBUG - 002459.SZ: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2024-08-13 15:15:27,656 - DEBUG -   Entering get()
+2024-08-13 15:15:27,656 - DEBUG - url=https://query2.finance.yahoo.com/v8/finance/chart/002459.SZ
+2024-08-13 15:15:27,656 - DEBUG - params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2024-08-13 15:15:27,656 - DEBUG -    Entering _get_cookie_and_crumb()
+2024-08-13 15:15:27,656 - DEBUG - cookie_mode = 'basic'
+2024-08-13 15:15:27,656 - DEBUG -     Entering _get_cookie_and_crumb_basic()
+2024-08-13 15:15:27,656 - DEBUG - reusing cookie
+2024-08-13 15:15:27,656 - DEBUG - reusing crumb
+2024-08-13 15:15:27,656 - DEBUG -     Exiting _get_cookie_and_crumb_basic()
+2024-08-13 15:15:27,656 - DEBUG -    Exiting _get_cookie_and_crumb()
+2024-08-13 15:15:27,927 - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/002459.SZ?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=%7B%22finance%22%3A%7B%22result%22%3Anull%2C%22error%22%3A%7B%22code%22%3A%22Unauthorized%22%2C%22description%22%3A%22Invalid+Cookie%22%7D%7D%7D HTTP/1.1" 200 1215
+2024-08-13 15:15:27,929 - DEBUG - response code=200
+2024-08-13 15:15:27,929 - DEBUG -   Exiting get()
+2024-08-13 15:15:27,930 - DEBUG - 002459.SZ: yfinance received OHLC data: 2024-08-13 07:00:00 -> 2024-08-13 07:00:00
+2024-08-13 15:15:27,930 - DEBUG - 002459.SZ: OHLC after cleaning: 2024-08-13 15:00:00+08:00 -> 2024-08-13 15:00:00+08:00
+2024-08-13 15:15:27,931 - DEBUG - 002459.SZ: OHLC after combining events: 2024-08-13 00:00:00+08:00 -> 2024-08-13 00:00:00+08:00
+2024-08-13 15:15:27,933 - DEBUG - 002459.SZ: yfinance returning OHLC: 2024-08-13 00:00:00+08:00 -> 2024-08-13 00:00:00+08:00
+2024-08-13 15:15:27,933 - DEBUG -  Exiting history()
+2024-08-13 15:15:27,934 - DEBUG - Exiting history()
+2024-08-13 15:15:27,936 - DEBUG - Raw data for 002459.SZ:                            Open   High  ...  Dividends  Stock Splits
+Date                                    ...                         
+2024-08-13 00:00:00+08:00  11.1  10.77  ...        0.0           0.0
+
+[1 rows x 7 columns]
+2024-08-13 15:15:27,936 - INFO - Successfully fetched data for 002459.SZ
+2024-08-13 15:15:27,937 - DEBUG - Fetched info for 002459.SZ: {'ticker': '002459.SZ', 'name': '晶澳科技', 'open': np.float64(11.100000381469727), 'close': np.float64(10.550000190734863), 'change': np.float64(-0.5500001907348633)}
+2024-08-13 15:15:27,937 - INFO - Fetching data for 300750.SZ, attempt 1/3
+2024-08-13 15:15:27,937 - DEBUG - Entering history()
+2024-08-13 15:15:27,937 - DEBUG - ('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['300750.SZ', 1, 0])
+2024-08-13 15:15:27,937 - DEBUG -  Entering history()
+2024-08-13 15:15:27,937 - DEBUG - 300750.SZ: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2024-08-13 15:15:27,937 - DEBUG -   Entering get()
+2024-08-13 15:15:27,937 - DEBUG - url=https://query2.finance.yahoo.com/v8/finance/chart/300750.SZ
+2024-08-13 15:15:27,937 - DEBUG - params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2024-08-13 15:15:27,937 - DEBUG -    Entering _get_cookie_and_crumb()
+2024-08-13 15:15:27,937 - DEBUG - cookie_mode = 'basic'
+2024-08-13 15:15:27,937 - DEBUG -     Entering _get_cookie_and_crumb_basic()
+2024-08-13 15:15:27,937 - DEBUG - reusing cookie
+2024-08-13 15:15:27,937 - DEBUG - reusing crumb
+2024-08-13 15:15:27,937 - DEBUG -     Exiting _get_cookie_and_crumb_basic()
+2024-08-13 15:15:27,937 - DEBUG -    Exiting _get_cookie_and_crumb()
+2024-08-13 15:15:28,200 - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/300750.SZ?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=%7B%22finance%22%3A%7B%22result%22%3Anull%2C%22error%22%3A%7B%22code%22%3A%22Unauthorized%22%2C%22description%22%3A%22Invalid+Cookie%22%7D%7D%7D HTTP/1.1" 200 1233
+2024-08-13 15:15:28,207 - DEBUG - response code=200
+2024-08-13 15:15:28,207 - DEBUG -   Exiting get()
+2024-08-13 15:15:28,209 - DEBUG - 300750.SZ: yfinance received OHLC data: 2024-08-13 07:00:02 -> 2024-08-13 07:00:02
+2024-08-13 15:15:28,210 - DEBUG - 300750.SZ: OHLC after cleaning: 2024-08-13 15:00:02+08:00 -> 2024-08-13 15:00:02+08:00
+2024-08-13 15:15:28,211 - DEBUG - 300750.SZ: OHLC after combining events: 2024-08-13 00:00:00+08:00 -> 2024-08-13 00:00:00+08:00
+2024-08-13 15:15:28,214 - DEBUG - 300750.SZ: yfinance returning OHLC: 2024-08-13 00:00:00+08:00 -> 2024-08-13 00:00:00+08:00
+2024-08-13 15:15:28,214 - DEBUG -  Exiting history()
+2024-08-13 15:15:28,214 - DEBUG - Exiting history()
+2024-08-13 15:15:28,218 - DEBUG - Raw data for 300750.SZ:                                  Open        High  ...  Dividends  Stock Splits
+Date                                               ...                         
+2024-08-13 00:00:00+08:00  173.600006  174.960007  ...        0.0           0.0
+
+[1 rows x 7 columns]
+2024-08-13 15:15:28,218 - INFO - Successfully fetched data for 300750.SZ
+2024-08-13 15:15:28,218 - DEBUG - Fetched info for 300750.SZ: {'ticker': '300750.SZ', 'name': '宁德时代', 'open': np.float64(173.60000610351562), 'close': np.float64(173.77999877929688), 'change': np.float64(0.17999267578125)}
+2024-08-13 15:15:28,218 - INFO - Fetching data for 002236.SZ, attempt 1/3
+2024-08-13 15:15:28,218 - DEBUG - Entering history()
+2024-08-13 15:15:28,218 - DEBUG - ('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['002236.SZ', 1, 0])
+2024-08-13 15:15:28,218 - DEBUG -  Entering history()
+2024-08-13 15:15:28,219 - DEBUG - 002236.SZ: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2024-08-13 15:15:28,219 - DEBUG -   Entering get()
+2024-08-13 15:15:28,219 - DEBUG - url=https://query2.finance.yahoo.com/v8/finance/chart/002236.SZ
+2024-08-13 15:15:28,219 - DEBUG - params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2024-08-13 15:15:28,219 - DEBUG -    Entering _get_cookie_and_crumb()
+2024-08-13 15:15:28,219 - DEBUG - cookie_mode = 'basic'
+2024-08-13 15:15:28,219 - DEBUG -     Entering _get_cookie_and_crumb_basic()
+2024-08-13 15:15:28,219 - DEBUG - reusing cookie
+2024-08-13 15:15:28,219 - DEBUG - reusing crumb
+2024-08-13 15:15:28,219 - DEBUG -     Exiting _get_cookie_and_crumb_basic()
+2024-08-13 15:15:28,219 - DEBUG -    Exiting _get_cookie_and_crumb()
+2024-08-13 15:15:28,495 - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/002236.SZ?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=%7B%22finance%22%3A%7B%22result%22%3Anull%2C%22error%22%3A%7B%22code%22%3A%22Unauthorized%22%2C%22description%22%3A%22Invalid+Cookie%22%7D%7D%7D HTTP/1.1" 200 1202
+2024-08-13 15:15:28,496 - DEBUG - response code=200
+2024-08-13 15:15:28,496 - DEBUG -   Exiting get()
+2024-08-13 15:15:28,497 - DEBUG - 002236.SZ: yfinance received OHLC data: 2024-08-13 07:00:00 -> 2024-08-13 07:00:00
+2024-08-13 15:15:28,497 - DEBUG - 002236.SZ: OHLC after cleaning: 2024-08-13 15:00:00+08:00 -> 2024-08-13 15:00:00+08:00
+2024-08-13 15:15:28,498 - DEBUG - 002236.SZ: OHLC after combining events: 2024-08-13 00:00:00+08:00 -> 2024-08-13 00:00:00+08:00
+2024-08-13 15:15:28,501 - DEBUG - 002236.SZ: yfinance returning OHLC: 2024-08-13 00:00:00+08:00 -> 2024-08-13 00:00:00+08:00
+2024-08-13 15:15:28,501 - DEBUG -  Exiting history()
+2024-08-13 15:15:28,501 - DEBUG - Exiting history()
+2024-08-13 15:15:28,504 - DEBUG - Raw data for 002236.SZ:                             Open   High  ...  Dividends  Stock Splits
+Date                                     ...                         
+2024-08-13 00:00:00+08:00  14.03  13.75  ...        0.0           0.0
+
+[1 rows x 7 columns]
+2024-08-13 15:15:28,504 - INFO - Successfully fetched data for 002236.SZ
+2024-08-13 15:15:28,504 - DEBUG - Fetched info for 002236.SZ: {'ticker': '002236.SZ', 'name': '大华股份', 'open': np.float64(14.029999732971191), 'close': np.float64(13.6899995803833), 'change': np.float64(-0.3400001525878906)}
+2024-08-13 15:15:28,504 - INFO - Fetching data for 600685.SS, attempt 1/3
+2024-08-13 15:15:28,504 - DEBUG - Entering history()
+2024-08-13 15:15:28,504 - DEBUG - ('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['600685.SS', 1, 0])
+2024-08-13 15:15:28,504 - DEBUG -  Entering history()
+2024-08-13 15:15:28,505 - DEBUG - 600685.SS: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2024-08-13 15:15:28,505 - DEBUG -   Entering get()
+2024-08-13 15:15:28,505 - DEBUG - url=https://query2.finance.yahoo.com/v8/finance/chart/600685.SS
+2024-08-13 15:15:28,505 - DEBUG - params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2024-08-13 15:15:28,505 - DEBUG -    Entering _get_cookie_and_crumb()
+2024-08-13 15:15:28,505 - DEBUG - cookie_mode = 'basic'
+2024-08-13 15:15:28,505 - DEBUG -     Entering _get_cookie_and_crumb_basic()
+2024-08-13 15:15:28,505 - DEBUG - reusing cookie
+2024-08-13 15:15:28,505 - DEBUG - reusing crumb
+2024-08-13 15:15:28,505 - DEBUG -     Exiting _get_cookie_and_crumb_basic()
+2024-08-13 15:15:28,505 - DEBUG -    Exiting _get_cookie_and_crumb()
+2024-08-13 15:15:28,795 - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/600685.SS?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=%7B%22finance%22%3A%7B%22result%22%3Anull%2C%22error%22%3A%7B%22code%22%3A%22Unauthorized%22%2C%22description%22%3A%22Invalid+Cookie%22%7D%7D%7D HTTP/1.1" 200 1253
+2024-08-13 15:15:28,798 - DEBUG - response code=200
+2024-08-13 15:15:28,798 - DEBUG -   Exiting get()
+2024-08-13 15:15:28,799 - DEBUG - 600685.SS: yfinance received OHLC data: 2024-08-13 07:00:02 -> 2024-08-13 07:00:02
+2024-08-13 15:15:28,800 - DEBUG - 600685.SS: OHLC after cleaning: 2024-08-13 15:00:02+08:00 -> 2024-08-13 15:00:02+08:00
+2024-08-13 15:15:28,801 - DEBUG - 600685.SS: OHLC after combining events: 2024-08-13 00:00:00+08:00 -> 2024-08-13 00:00:00+08:00
+2024-08-13 15:15:28,803 - DEBUG - 600685.SS: yfinance returning OHLC: 2024-08-13 00:00:00+08:00 -> 2024-08-13 00:00:00+08:00
+2024-08-13 15:15:28,803 - DEBUG -  Exiting history()
+2024-08-13 15:15:28,803 - DEBUG - Exiting history()
+2024-08-13 15:15:28,807 - DEBUG - Raw data for 600685.SS:                                 Open   High  ...  Dividends  Stock Splits
+Date                                         ...                         
+2024-08-13 00:00:00+08:00  26.889999  27.49  ...        0.0           0.0
+
+[1 rows x 7 columns]
+2024-08-13 15:15:28,807 - INFO - Successfully fetched data for 600685.SS
+2024-08-13 15:15:28,807 - DEBUG - Fetched info for 600685.SS: {'ticker': '600685.SS', 'name': '中船防务', 'open': np.float64(26.889999389648438), 'close': np.float64(27.200000762939453), 'change': np.float64(0.3100013732910156)}
+2024-08-13 15:15:28,807 - DEBUG - Final email body: 代码执行时间：2024-08-13 15:13:26
+
+今日股票信息:
+
+无法获取股票代码为 600415.SS 的信息
+
+无法获取股票代码为 600988.SS 的信息
+
+股票代码: 002142.SZ
+股票名称: 宁波银行
+开盘价格: 20.88￥
+收盘价格: 20.30￥
+涨跌幅度: -0.58%
+
+股票代码: 002497.SZ
+股票名称: 雅化集团
+开盘价格: 8.72￥
+收盘价格: 8.63￥
+涨跌幅度: -0.09%
+
+股票代码: 002459.SZ
+股票名称: 晶澳科技
+开盘价格: 11.10￥
+收盘价格: 10.55￥
+涨跌幅度: -0.55%
+
+股票代码: 300750.SZ
+股票名称: 宁德时代
+开盘价格: 173.60￥
+收盘价格: 173.78￥
+涨跌幅度: 0.18%
+
+股票代码: 002236.SZ
+股票名称: 大华股份
+开盘价格: 14.03￥
+收盘价格: 13.69￥
+涨跌幅度: -0.34%
+
+股票代码: 600685.SS
+股票名称: 中船防务
+开盘价格: 26.89￥
+收盘价格: 27.20￥
+涨跌幅度: 0.31%
+
+
+2024-08-13 15:15:28,807 - INFO - Connecting to SMTP server...
+2024-08-13 15:15:29,107 - INFO - Logging in to SMTP server...
+2024-08-13 15:15:29,196 - INFO - Sending email...
+2024-08-13 15:15:30,286 - INFO - Email sent successfully!
+2024-08-13 15:15:30,286 - INFO - Script finished

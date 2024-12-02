@@ -29,7 +29,8 @@ def save_id(ids):
                             SELECT 1 FROM xhs_search WHERE search_id = %s AND user_id = %s
                         )
                     '''
-                    cursor.execute(sql, (id, user_id, id, user_id))  # 使用四个参数
+                    cursor.execute(sql, (id, user_id, id
+                                         , user_id))  # 使用四个参数
                     conn.commit()
                     print("ID写入完成！")
     except pymysql.MySQLError as e:
