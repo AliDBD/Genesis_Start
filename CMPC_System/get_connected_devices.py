@@ -241,7 +241,7 @@ def send_screenshot_to_api(base64_data, udid, api_url):
             base64_data = f"data:image/png;base64,{base64_data}"
             
         payload = {
-            'profile': '我是一个喜欢看搞笑和购物推荐的人',
+            'profile': '喜欢搞笑视频、喜欢汽车类',
             'content': '',
             'attachments': [base64_data]
         }
@@ -300,7 +300,7 @@ def perform_operations(udid):
 
         #随机滑动次数
         #slide = random.randint(25, 300)
-        slide = 15
+        slide =5
         time.sleep(5)
         # 设置API地址
         api_url = "https://iris.iigood.com/iris/v1/agent/interest"
@@ -315,23 +315,88 @@ def perform_operations(udid):
                 # 获取截图并转换为base64
                 base64_data = get_screenshot_base64(udid)
                 if base64_data:
-                    # 发送到API
-                    api_response = send_screenshot_to_api(base64_data, udid, api_url)
-                    print(f"[{udid}] API返回: {api_response}")
-                    
-                    # 基础等待时间
-                    base_wait_time = 2
-                    # 根据API返回结果中的isInterested值决定额外等待时间
-                    if api_response and api_response.get('isInterested') == True:
-                        extra_wait_time = random.randint(1, 60)
-                        total_wait_time = base_wait_time + extra_wait_time
-                        print(f"[{udid}] isInterested为True，基础等待{base_wait_time}秒 + 随机等待{extra_wait_time}秒 = 总共等待{total_wait_time}秒")
-                    else:
-                        total_wait_time = base_wait_time
-                        print(f"[{udid}] isInterested为False，等待{total_wait_time}秒")
+                    try:
+                        # 发送到API，设置超时时间为10秒
+                        api_response = send_screenshot_to_api(base64_data, udid, api_url)
+                        print(f"[{udid}] API返回: {api_response}")
+                        
+                        # 如果API请求成功，根据返回值处理
+                        if api_response and isinstance(api_response, dict):
+                            # 基础等待时间
+                            base_wait_time = 2
+                            # 根据API返回结果中的isInterested值决定额外等待时间
+                            if api_response.get('isInterested') == True:
+                                extra_wait_time = random.randint(1, 60)
+                                total_wait_time = base_wait_time + extra_wait_time
+                                click_time = random.randint(3,total_wait_time)
+                                click_wait_time = random.randint(3,total_wait_time)
+                                
+                                # 随机获取坐标列表的坐标进行点击评论按钮
+                                comment_list = [(970,2085),(1000,2085),(1030,2085),(1060,2085),(1090,2085)]
+                                comment_x,comment_y = random.choice(comment_list)
+                                print(f"[{udid}] 准备点击评论坐标: ({comment_x}, {comment_y})")
+                                tap_point(udid, comment_x, comment_y)
+                                
+                                # 等待评论区加载
+                                time.sleep(2)
+                                
+                                # 随机决定上下滑动次数
+                                up_swipes = random.randint(2, 5)    # 向上滑动2-5次
+                                down_swipes = random.randint(1, 3)  # 向下滑动1-3次
+                                
+                                print(f"[{udid}] 准备在评论区滑动: 向上{up_swipes}次, 向下{down_swipes}次")
+                                
+                                # 先向上滑动
+                                for _ in range(up_swipes):
+                                    try:
+                                        # 在评论区范围内滑动（Y坐标范围根据实际评论区位置调整）
+                                        subprocess.run(
+                                            ['adb', '-s', udid, 'shell', 'input', 'swipe', 
+                                             '540', '1800', '540', '1000', '200'],
+                                            check=True, timeout=5
+                                        )
+                                        # 每次滑动后短暂等待
+                                        time.sleep(random.uniform(0.5, 3))
+                                    except Exception as e:
+                                        print(f"[{udid}] 评论区向上滑动失败: {e}")
+                                
+                                # 然后向下滑动
+                                for _ in range(down_swipes):
+                                    try:
+                                        subprocess.run(
+                                            ['adb', '-s', udid, 'shell', 'input', 'swipe',
+                                             '540', '1000', '540', '1800', '200'],
+                                            check=True, timeout=5
+                                        )
+                                        # 每次滑动后短暂等待
+                                        time.sleep(random.uniform(0.5, 3))
+                                    except Exception as e:
+                                        print(f"[{udid}] 评论区向下滑动失败: {e}")
+                                
+                                # 点击顶部空白区域关闭评论区
+                                tap_point(udid, 540, 500)
+                                time.sleep(1)
+                                
+                                print(f"[{udid}] isInterested为True，基础等待{base_wait_time}秒 + 随机等待{extra_wait_time}秒 = 总共等待{total_wait_time}秒")
+                            else:
+                                total_wait_time = base_wait_time
+                                print(f"[{udid}] isInterested为False，等待{total_wait_time}秒")
+                        else:
+                            # API请求失败或返回格式不正确，使用默认等待时间
+                            total_wait_time = 2
+                            print(f"[{udid}] API返回异常，使用默认等待时间{total_wait_time}秒")
+                            
+                    except Exception as api_error:
+                        # API请求出错，使用默认等待时间
+                        total_wait_time = 2
+                        print(f"[{udid}] API请求失败: {api_error}，使用默认等待时间{total_wait_time}秒")
                     
                     # 执行等待
                     time.sleep(total_wait_time)
+                else:
+                    # 截图失败，使用默认等待时间
+                    print(f"[{udid}] 截图失败，使用默认等待时间2秒")
+                    time.sleep(2)
                 
                 # 执行滑动操作
                 result = subprocess.run(
@@ -411,3 +476,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
