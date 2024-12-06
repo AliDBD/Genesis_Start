@@ -253,6 +253,29 @@ def send_screenshot_to_api(base64_data, udid, api_url):
         return None
 
 
+def send_comments_to_api(comments, udid, api_url):
+    """
+    发送前两条评论到API
+    """
+    try:
+        if len(comments) >= 3:
+            headers = {
+                'Content-Type': 'application/json'
+            }
+            payload = {
+                'profile': '喜欢搞笑视频、喜欢汽车类',
+                'content': comments[0],  # 主题
+                'comments': comments[1] + comments[2]   # 评论内容
+            }
+            response = requests.post(api_url, json=payload, headers=headers)
+            response.raise_for_status()
+            print(f"[{udid}] 评论接口请求数据发送成功: {comments[0]}, {comments[1]}")
+            return response.json()
+    except Exception as e:
+        print(f"[{udid}] 发送评论失败: {e}")
+    return None
+
+
 def perform_operations(udid):
     try:
         print(f"[{udid}] 开始执行操作")
@@ -315,103 +338,80 @@ def perform_operations(udid):
                 # 获取截图并转换为base64
                 base64_data = get_screenshot_base64(udid)
                 if base64_data:
-                    try:
-                        # 发送到API，设置超时时间为10秒
-                        api_response = send_screenshot_to_api(base64_data, udid, api_url)
-                        print(f"[{udid}] API返回: {api_response}")
-                        
-                        # 如果API请求成功，根据返回值处理
-                        if api_response and isinstance(api_response, dict):
-                            # 基础等待时间
-                            base_wait_time = 2
-                            # 根据API返回结果中的isInterested值决定额外等待时间
-                            if api_response.get('isInterested') == True:
-                                extra_wait_time = random.randint(1, 60)
-                                total_wait_time = base_wait_time + extra_wait_time
-                                click_time = random.randint(3,total_wait_time)
-                                click_wait_time = random.randint(3,total_wait_time)
-                                
-                                # 随机获取坐标列表的坐标进行点击评论按钮
-                                comment_list = [(970,2085),(1000,2085),(1030,2085),(1060,2085),(1090,2085)]
-                                comment_x,comment_y = random.choice(comment_list)
-                                print(f"[{udid}] 准备点击评论坐标: ({comment_x}, {comment_y})")
-                                tap_point(udid, comment_x, comment_y)
-                                
-                                # 等待评论区加载
-                                time.sleep(2)
-                                
-                                # 随机决定上下滑动次数
-                                up_swipes = random.randint(2, 5)    # 向上滑动2-5次
-                                down_swipes = random.randint(1, 3)  # 向下滑动1-3次
-                                
-                                print(f"[{udid}] 准备在评论区滑动: 向上{up_swipes}次, 向下{down_swipes}次")
-                                
-                                # 先向上滑动
-                                for _ in range(up_swipes):
-                                    try:
-                                        # 在评论区范围内滑动（Y坐标范围根据实际评论区位置调整）
-                                        subprocess.run(
-                                            ['adb', '-s', udid, 'shell', 'input', 'swipe', 
-                                             '540', '1800', '540', '1000', '200'],
-                                            check=True, timeout=5
-                                        )
-                                        # 每次滑动后短暂等待
-                                        time.sleep(random.uniform(0.5, 3))
-                                    except Exception as e:
-                                        print(f"[{udid}] 评论区向上滑动失败: {e}")
-                                
-                                # 然后向下滑动
-                                for _ in range(down_swipes):
-                                    try:
-                                        subprocess.run(
-                                            ['adb', '-s', udid, 'shell', 'input', 'swipe',
-                                             '540', '1000', '540', '1800', '200'],
-                                            check=True, timeout=5
-                                        )
-                                        # 每次滑动后短暂等待
-                                        time.sleep(random.uniform(0.5, 3))
-                                    except Exception as e:
-                                        print(f"[{udid}] 评论区向下滑动失败: {e}")
-                                
-                                # 点击顶部空白区域关闭评论区
-                                tap_point(udid, 540, 500)
-                                time.sleep(1)
-                                
-                                print(f"[{udid}] isInterested为True，基础等待{base_wait_time}秒 + 随机等待{extra_wait_time}秒 = 总共等待{total_wait_time}秒")
-                            else:
-                                total_wait_time = base_wait_time
-                                print(f"[{udid}] isInterested为False，等待{total_wait_time}秒")
-                        else:
-                            # API请求失败或返回格式不正确，使用默认等待时间
-                            total_wait_time = 2
-                            print(f"[{udid}] API返回异常，使用默认等待时间{total_wait_time}秒")
-                            
-                    except Exception as api_error:
-                        # API请求出错，使用默认等待时间
-                        total_wait_time = 2
-                        print(f"[{udid}] API请求失败: {api_error}，使用默认等待时间{total_wait_time}秒")
+                    # 发送到API，设置超时时间为10秒
+                    api_response = send_screenshot_to_api(base64_data, udid, api_url)
+                    print(f"[{udid}] API返回: {api_response}")
                     
-                    # 执行等待
-                    time.sleep(total_wait_time)
-                else:
-                    # 截图失败，使用默认等待时间
-                    print(f"[{udid}] 截图失败，使用默认等待时间2秒")
-                    time.sleep(2)
-                
-                # 执行滑动操作
-                result = subprocess.run(
-                    ['adb', '-s', udid, 'shell', 'input', 'swipe', '540', '2000', '540', '1000', '200'],
-                    check=True,  
-                    timeout=5    
-                )
-            except subprocess.TimeoutExpired:
-                print(f"[{udid}] 滑动操作超时，设备可能已断开")
-                return
-            except subprocess.CalledProcessError:
-                print(f"[{udid}] 滑动操作失败，设备可能已断开")
-                return
+                    # 基础等待时间
+                    base_wait_time = 2
+                    
+                    # 根据API返回结果中的isInterested值决定操作
+                    if api_response and isinstance(api_response, dict) and api_response.get('isInterested') == True:
+                        # 点击评论按钮
+                        comment_list = [(970,2085),(1000,2085),(1030,2085),(1060,2085),(1090,2085)]
+                        comment_x,comment_y = random.choice(comment_list)
+                        print(f"[{udid}] 准备点击评论坐标: ({comment_x}, {comment_y})")
+                        tap_point(udid, comment_x, comment_y)
+                        
+                        # 等待评论区加载
+                        time.sleep(2)
+                        
+                        # 获取评论内容
+                        comments = get_comments_ui(udid)
+                        if comments:
+                            print(f"[{udid}] 获取到的评论内容:")
+                            for i, comment in enumerate(comments, 1):
+                                print(f"{i}. {comment}")
+                            
+                            # 发送前两条评论到API
+                            comments_api_url = "https://iris.iigood.com/iris/v1/agent/comment"
+                            comments_response = send_comments_to_api(comments, udid, comments_api_url)
+                            if comments_response:
+                                print(f"[{udid}] 评论API返回: {comments_response}")
+                        
+                        # 随机决定上下滑动次数
+                        up_swipes = random.randint(2, 5)
+                        down_swipes = random.randint(1, 3)
+                        print(f"[{udid}] 准备在评论区滑动: 向上{up_swipes}次, 向下{down_swipes}次")
+                        
+                        # 在评论区滑动
+                        for _ in range(up_swipes):
+                            subprocess.run(
+                                ['adb', '-s', udid, 'shell', 'input', 'swipe', 
+                                 '540', '1800', '540', '1000', '200'],
+                                check=True, timeout=5
+                            )
+                            time.sleep(random.uniform(0.5, 3))
+                        
+                        for _ in range(down_swipes):
+                            subprocess.run(
+                                ['adb', '-s', udid, 'shell', 'input', 'swipe',
+                                 '540', '1000', '540', '1800', '200'],
+                                check=True, timeout=5
+                            )
+                            time.sleep(random.uniform(0.5, 3))
+                        
+                        # 关闭评论区
+                        tap_point(udid, 540, 500)
+                        time.sleep(1)
+                        
+                        # 计算并执行总等待时间
+                        extra_wait_time = random.randint(1, 60)
+                        total_wait_time = base_wait_time + extra_wait_time
+                        print(f"[{udid}] isInterested为True，等待{total_wait_time}秒")
+                        time.sleep(total_wait_time)
+                    
+                    else:
+                        print(f"[{udid}] isInterested为False，等待{base_wait_time}秒")
+                        time.sleep(base_wait_time)
+                    
+                    # 最后执行视频滑动
+                    subprocess.run(
+                        ['adb', '-s', udid, 'shell', 'input', 'swipe', '540', '2000', '540', '1000', '200'],
+                        check=True, timeout=5
+                    )
             except Exception as e:
-                print(f"[{udid}] 滑动操作发生错误: {e}")
+                print(f"[{udid}] 操作发生错误: {e}")
                 return
 
         print(f"[{udid}] 操作完成")
@@ -472,6 +472,82 @@ def main():
             print(f"[{udid}] 关闭APP或锁屏时发生错误: {e}")
 
     print("所有设备已关闭APP并锁屏")
+
+
+def get_comments_accessibility(udid):
+    """
+    使用无障碍服务获取评论内容
+    """
+    try:
+        result = subprocess.run([
+            'adb', '-s', udid, 'shell', 'service', 'call', 'accessibility', '1'
+        ], stdout=subprocess.PIPE, text=True)
+        
+        # 解析输出获取评论内容
+        # 这部分需要根据实际的输出格式来实现
+        
+        return []
+    except Exception as e:
+        print(f"[{udid}] 通过无障碍服务获取评论失败: {e}")
+        return []
+
+
+def get_comments_ui(udid):
+    """
+    使用UIAutomator获取评论区的评论内容，只保留8个字以上的评论
+    """
+    try:
+        print(f"[{udid}] 开始获取评论内容...")
+        
+        # 使用UIAutomator dump当前界面
+        result = subprocess.run(
+            ['adb', '-s', udid, 'shell', 'uiautomator', 'dump', '/data/local/tmp/ui.xml'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=True
+        )
+        
+        # 等待文件生成
+        time.sleep(1)
+        
+        # 将xml文件拉到本地
+        subprocess.run(
+            ['adb', '-s', udid, 'pull', '/data/local/tmp/ui.xml', f'comments_{udid}.xml'],
+            check=True
+        )
+        
+        # 读取xml文件内容
+        import xml.etree.ElementTree as ET
+        tree = ET.parse(f'comments_{udid}.xml')
+        root = tree.getroot()
+        
+        # 接收评论内容
+        comments = []
+        # 根据特定的TextView特征来识别评论
+        for node in root.findall(".//node[@class='android.widget.TextView']"):
+            text = node.get('text', '').strip()
+            # 过滤条件：长度大于8且不以特定文字开头
+            if text and len(text) >= 8 and not text.startswith(('点赞', '评论', '分享')):
+                comments.append(text)
+        
+        # 清理临时文件
+        os.remove(f'comments_{udid}.xml')
+        subprocess.run(['adb', '-s', udid, 'shell', 'rm', '/data/local/tmp/ui.xml'])
+        
+        print(f"[{udid}] 获取到{len(comments)}条8字以上的评论")
+        return comments
+        
+    except Exception as e:
+        print(f"[{udid}] 获取评论失败: {e}")
+        # 清理可能存在的临时文件
+        try:
+            if os.path.exists(f'comments_{udid}.xml'):
+                os.remove(f'comments_{udid}.xml')
+            subprocess.run(['adb', '-s', udid, 'shell', 'rm', '/data/local/tmp/ui.xml'])
+        except:
+            pass
+        return []
 
 
 if __name__ == "__main__":
