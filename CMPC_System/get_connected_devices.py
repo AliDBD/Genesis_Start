@@ -258,14 +258,14 @@ def send_comments_to_api(comments, udid, api_url):
     发送前两条评论到API
     """
     try:
-        if len(comments) >= 3:
+        if len(comments) >= 5:
             headers = {
                 'Content-Type': 'application/json'
             }
             payload = {
                 'profile': '喜欢搞笑视频、喜欢汽车类',
                 'content': comments[0],  # 主题
-                'comments': comments[1] + comments[2]   # 评论内容
+                'comments': comments[1] + comments[2] + comments[3] + comments[4]   # 评论内容
             }
             response = requests.post(api_url, json=payload, headers=headers)
             response.raise_for_status()
@@ -322,8 +322,9 @@ def perform_operations(udid):
         tap_point(udid, x2, y2)
 
         #随机滑动次数
-        #slide = random.randint(25, 300)
-        slide =5
+        slide = random.randint(25, 300)
+        print(f"随机次数为：{slide}")
+        # slide =5
         time.sleep(5)
         # 设置API地址
         api_url = "https://iris.iigood.com/iris/v1/agent/interest"
