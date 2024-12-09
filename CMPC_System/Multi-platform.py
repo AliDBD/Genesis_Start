@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 # -- coding: utf-8 --
-# @Time : 2024/12/2 11:55
+# @Time : 2024/12/9 11:55
 # @Author : Genesis Ai
-# @File : get_connected_devices.py
+# @File : Multi-platform.py
 '''
 **可以获取设备号
 **可以打开微信，获取坐标
+**可以打开抖音，获取坐标
+**可以发送图片到API
+**可以发送评论到API 
 '''
 
 import subprocess
@@ -17,6 +20,7 @@ import base64
 import requests
 import os
 from datetime import datetime
+from get_connected_devices import *  # 导入基础功能
 
 # 日志配置
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(threadName)s] %(message)s")
@@ -28,6 +32,7 @@ def get_connected_devices():
     """
     result = subprocess.run(['adb', 'devices'], stdout=subprocess.PIPE, text=True)
     devices = [line.split()[0] for line in result.stdout.splitlines()[1:] if 'device' in line]
+    print(f"检测到的设备: {devices}")
     return devices
 
 
@@ -241,7 +246,7 @@ def send_screenshot_to_api(base64_data, udid, api_url):
             base64_data = f"data:image/png;base64,{base64_data}"
             
         payload = {
-            'profile': '喜欢搞笑视频',
+            'profile': '喜欢搞笑视频、喜欢汽车类',
             'content': '',
             'attachments': [base64_data]
         }
@@ -263,7 +268,7 @@ def send_comments_to_api(comments, udid, api_url):
                 'Content-Type': 'application/json'
             }
             payload = {
-                'profile': '喜欢搞笑视频',
+                'profile': '喜欢搞笑视频、喜欢汽车类',
                 'content': comments[0],  # 主题
                 'comments': comments[1] + comments[2] + comments[3] + comments[4]   # 评论内容
             }
@@ -323,8 +328,8 @@ def perform_operations(udid):
 
         #随机滑动次数
         slide = random.randint(25, 300)
-        print(f"随机次数为：{slide}")
-        # slide =5
+        #print(f"随机次数为：{slide}")
+        slide =5
         time.sleep(5)
         # 设置API地址
         api_url = "https://iris.iigood.com/iris/v1/agent/interest"
@@ -432,47 +437,59 @@ def lock_screen(udid):
         print(f"[{udid}] 锁屏失败: {e}")
 
 
-def main():
+def perform_douyin_operations(udid):
     """
-    主程序入口。
+    执行抖音的操作流程
     """
-    devices = get_connected_devices()
-    if not devices:
-        print("没有检测到连接的设备")
-        return
+    try:
+        print(f"[{udid}] 开始执行抖音操作")
+        
+        # 强制停止抖音
+        force_stop_app(udid, "com.ss.android.ugc.aweme")
+        time.sleep(2)
+        
+        # 启动抖音
+        open_app(udid, "com.ss.android.ugc.aweme/com.ss.android.ugc.aweme.splash.SplashActivity")
+        time.sleep(10)  # 抖音启动需要更长时间
+        
+        # 这里添加抖音的具体操作代码
+        # ...
+        
+        print(f"[{udid}] 抖音操作完成")
+    except Exception as e:
+        print(f"[{udid}] 抖音操作时发生错误: {e}")
 
-    print(f"检测到的设备: {devices}")
 
-    # 多线程执行操作
-    threads = []
-    for udid in devices:
-        thread = threading.Thread(target=perform_operations, args=(udid,))
-        threads.append(thread)
-        thread.start()
+def multi_platform_operations(udid):
+    """
+    执行多平台操作的主函数
+    """
+    try:
+        print(f"[{udid}] 开始执行多平台操作")
 
-    # 等待所有线程完成
-    for thread in threads:
-        thread.join()
+        # 确保屏幕解锁
+        ensure_screen_unlocked(udid)
 
-    print("所有设备操作完成")
-    
-    # 所有设备操作完成后，关闭APP并锁屏
-    for udid in devices:
-        try:
-            # 强制停止微信
-            force_stop_app(udid, "com.tencent.mm/com.tencent.mm.ui.LauncherUI")
-            print(f"[{udid}] 微信已关闭")
-            
-            # 等待一下确保APP完全关闭
-            time.sleep(2)
-            
-            # 锁定屏幕
-            lock_screen(udid)
-            
-        except Exception as e:
-            print(f"[{udid}] 关闭APP或锁屏时发生错误: {e}")
+        # 1. 执行微信操作
+        perform_operations(udid)  # 使用原有的微信操作函数
 
-    print("所有设备已关闭APP并锁屏")
+        # 2. 回到桌面
+        subprocess.run(['adb', '-s', udid, 'shell', 'input', 'keyevent', 'KEYCODE_HOME'])
+        time.sleep(2)
+
+        # 3. 执行抖音操作
+        perform_douyin_operations(udid)
+
+        # 4. 回到桌面
+        subprocess.run(['adb', '-s', udid, 'shell', 'input', 'keyevent', 'KEYCODE_HOME'])
+        time.sleep(2)
+
+        # 5. 锁屏
+        lock_screen(udid)
+
+        print(f"[{udid}] 所有平台操作完成")
+    except Exception as e:
+        print(f"[{udid}] 多平台操作时发生错误: {e}")
 
 
 def get_comments_accessibility(udid):
@@ -552,5 +569,22 @@ def get_comments_ui(udid):
 
 
 if __name__ == "__main__":
-    main()
+    devices = get_connected_devices()
+    if not devices:
+        print("没有检测到连接的设备")
+    else:
+        print(f"检测到的设备: {devices}")
+        
+        # 多线程执行操作
+        threads = []
+        for udid in devices:
+            thread = threading.Thread(target=multi_platform_operations, args=(udid,))
+            threads.append(thread)
+            thread.start()
+
+        # 等待所有线程完成
+        for thread in threads:
+            thread.join()
+
+        print("所有设备的多平台操作完成")
 
