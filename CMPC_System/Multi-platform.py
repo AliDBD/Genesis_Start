@@ -329,7 +329,7 @@ def perform_operations(udid):
         #随机滑动次数
         slide = random.randint(25, 300)
         #print(f"随机次数为：{slide}")
-        slide =5
+        slide =150
         time.sleep(5)
         # 设置API地址
         api_url = "https://iris.iigood.com/iris/v1/agent/interest"
@@ -384,7 +384,7 @@ def perform_operations(udid):
                         for _ in range(up_swipes):
                             subprocess.run(
                                 ['adb', '-s', udid, 'shell', 'input', 'swipe', 
-                                 '540', '1800', '540', '1000', '200'],
+                                 '540', '1800', '540', '1000', '300'],  # 增加滑动时间
                                 check=True, timeout=5
                             )
                             time.sleep(random.uniform(0.5, 3))
@@ -392,7 +392,7 @@ def perform_operations(udid):
                         for _ in range(down_swipes):
                             subprocess.run(
                                 ['adb', '-s', udid, 'shell', 'input', 'swipe',
-                                 '540', '1000', '540', '1800', '200'],
+                                 '540', '1000', '540', '1800', '300'],  # 增加滑动时间
                                 check=True, timeout=5
                             )
                             time.sleep(random.uniform(0.5, 3))
@@ -413,7 +413,7 @@ def perform_operations(udid):
                     
                     # 最后执行视频滑动
                     subprocess.run(
-                        ['adb', '-s', udid, 'shell', 'input', 'swipe', '540', '2000', '540', '1000', '200'],
+                        ['adb', '-s', udid, 'shell', 'input', 'swipe', '540', '2000', '540', '1000', '300'],  # 增加滑动时间
                         check=True, timeout=5
                     )
             except Exception as e:
