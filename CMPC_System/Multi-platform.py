@@ -25,6 +25,37 @@ from get_connected_devices import *  # 导入基础功能
 # 日志配置
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(threadName)s] %(message)s")
 
+# 添加设备信息缓存
+device_info_cache = {}
+
+def cache_device_info(udid):
+    """
+    缓存设备信息，包括屏幕尺寸和常用坐标
+    """
+    try:
+        if udid not in device_info_cache:
+            # 获取屏幕尺寸
+            screen_width, screen_height = get_screen_size(udid)
+            
+            # 计算常用坐标
+            device_info_cache[udid] = {
+                'screen_width': screen_width,
+                'screen_height': screen_height,
+                'center_x': screen_width // 2,
+                'center_y': screen_height // 2,
+                'coordinates': {
+                    'swipe_start': (540, 1800),
+                    'swipe_end': (540, 500),
+                    'comment_buttons': [(970,2085), (1000,2085), (1030,2085), (1060,2085), (1090,2085)],
+                    'close_comment': (540, 500)
+                }
+            }
+            print(f"[{udid}] 设备信息已缓存")
+            
+        return device_info_cache[udid]
+    except Exception as e:
+        print(f"[{udid}] 缓存设备信息失败: {e}")
+        return None
 
 def get_connected_devices():
     """
@@ -38,10 +69,21 @@ def get_connected_devices():
 
 def is_screen_on(udid):
     """
-    检查屏幕是否亮起。
+    检查屏幕是否亮起，使用更可靠的检测方法
     """
-    result = subprocess.run(['adb', '-s', udid, 'shell', 'dumpsys', 'power'], stdout=subprocess.PIPE, text=True)
-    return "state=ON" in result.stdout
+    try:
+        result = subprocess.run(
+            ['adb', '-s', udid, 'shell', 'dumpsys', 'display | grep "mScreenState"'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=5
+        )
+        print(f"[{udid}] 屏幕状态检查结果: {result.stdout}")  # 添加调试信息
+        return "ON" in result.stdout or "SCREEN_STATE_ON" in result.stdout
+    except Exception as e:
+        print(f"[{udid}] 检查屏幕状态时出错: {e}")
+        return True  # 如果检查失败，默认认为屏幕是亮着的
 
 
 def unlock_screen(udid):
@@ -246,7 +288,7 @@ def send_screenshot_to_api(base64_data, udid, api_url):
             base64_data = f"data:image/png;base64,{base64_data}"
             
         payload = {
-            'profile': '喜欢搞笑视频、喜欢汽车类',
+            'profile': '喜欢搞笑喜欢汽车美食',
             'content': '',
             'attachments': [base64_data]
         }
@@ -268,7 +310,7 @@ def send_comments_to_api(comments, udid, api_url):
                 'Content-Type': 'application/json'
             }
             payload = {
-                'profile': '喜欢搞笑视频、喜欢汽车类',
+                'profile': '喜欢搞笑喜欢汽车美食',
                 'content': comments[0],  # 主题
                 'comments': comments[1] + comments[2] + comments[3] + comments[4]   # 评论内容
             }
@@ -306,11 +348,11 @@ def perform_operations(udid):
 
         # 第一个点击位置
         x1, y1 = 686, 2187
-        print(f"[{udid}] 准备点击第一个坐标: ({x1}, {y1})")
+        print(f"[{udid}] 准备点击第一个坐标发现位置: ({x1}, {y1})")
         tap_point(udid, x1, y1)
 
         # 等待页面响应和加载
-        time.sleep(5)  # 根据实际情况调整等待时间
+        time.sleep(2)  # 根据实际情况调整等待时间
 
         # 第二个点击位置
         coordinate_list = [
@@ -323,13 +365,13 @@ def perform_operations(udid):
             (855,508)
         ]
         x2, y2 = random.choice(coordinate_list)
-        print(f"[{udid}] 准备点击第二个坐标: ({x2}, {y2})")
+        print(f"[{udid}] 准备点击第二个坐标视频号: ({x2}, {y2})")
         tap_point(udid, x2, y2)
 
         #随机滑动次数
         slide = random.randint(25, 300)
         #print(f"随机次数为：{slide}")
-        slide =150
+        slide = 5
         time.sleep(5)
         # 设置API地址
         api_url = "https://iris.iigood.com/iris/v1/agent/interest"
@@ -437,6 +479,56 @@ def lock_screen(udid):
         print(f"[{udid}] 锁屏失败: {e}")
 
 
+def check_live_stream(udid):
+    """
+    检查当前页面是否包含直播内容
+    """
+    try:
+        # 使用UIAutomator dump当前界面
+        subprocess.run(
+            ['adb', '-s', udid, 'shell', 'uiautomator', 'dump', '/data/local/tmp/ui.xml'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=True
+        )
+        time.sleep(0.5)
+        
+        # 将xml文件拉到本地
+        subprocess.run(
+            ['adb', '-s', udid, 'pull', '/data/local/tmp/ui.xml', f'temp_{udid}.xml'],
+            check=True
+        )
+        
+        # 读取xml文件内容
+        import xml.etree.ElementTree as ET
+        tree = ET.parse(f'temp_{udid}.xml')
+        root = tree.getroot()
+        
+        # 需要跳过的关键词列表
+        skip_keywords = ['直播', '正在直播', 'LIVE']
+        
+        for node in root.findall(".//node[@class='android.widget.TextView']"):
+            text = node.get('text', '').strip()
+            if any(keyword in text for keyword in skip_keywords):
+                print(f"[{udid}] 检测到需要跳过的内容: {text}")
+                return True
+        
+        return False
+        
+    except Exception as e:
+        print(f"[{udid}] 检查直播内容时出错: {e}")
+        return False
+    finally:
+        # 清理临时文件
+        try:
+            if os.path.exists(f'temp_{udid}.xml'):
+                os.remove(f'temp_{udid}.xml')
+            subprocess.run(['adb', '-s', udid, 'shell', 'rm', '/data/local/tmp/ui.xml'])
+        except:
+            pass
+
+
 def perform_douyin_operations(udid):
     """
     执行抖音的操作流程
@@ -444,20 +536,146 @@ def perform_douyin_operations(udid):
     try:
         print(f"[{udid}] 开始执行抖音操作")
         
+        # 获取设备信息（从缓存中）
+        device_info = cache_device_info(udid)
+        if not device_info:
+            print(f"[{udid}] 无法获取设备信息，停止操作")
+            return
+            
+        # 使用缓存的坐标，计算视频区域的中心点
+        screen_width = device_info['screen_width']
+        screen_height = device_info['screen_height']
+        # 视频区域通常在屏幕中间偏上的位置
+        center_x = screen_width // 2
+        center_y = (screen_height * 2) // 5  # 屏幕高度的40%位置
+        swipe_coords = device_info['coordinates']['swipe_start'] + device_info['coordinates']['swipe_end']
+        
         # 强制停止抖音
         force_stop_app(udid, "com.ss.android.ugc.aweme")
         time.sleep(2)
         
         # 启动抖音
         open_app(udid, "com.ss.android.ugc.aweme/com.ss.android.ugc.aweme.splash.SplashActivity")
-        time.sleep(10)  # 抖音启动需要更长时间
+        time.sleep(10)
         
-        # 这里添加抖音的具体操作代码
-        # ...
+        # 随机执行滑动次数
+        slide_count = random.randint(25, 100)
+        print(f"[{udid}] 计划执行{slide_count}次滑动")
+        
+        # 设置API地址
+        api_url = "https://iris.iigood.com/iris/v1/agent/interest"
+        
+        for i in range(slide_count):
+            if not check_device_connected(udid):
+                print(f"[{udid}] 设备已断开连接，停止操作")
+                return
+                
+            print(f"[{udid}] 第{i+1}次滑动操作")
+            
+            try:
+                # 首先检查是否是直播内容
+                if check_live_stream(udid):
+                    print(f"[{udid}] 跳过直播内容")
+                    # 直接滑动到下一个视频
+                    subprocess.run(
+                        ['adb', '-s', udid, 'shell', 'input', 'swipe'] + 
+                        [str(x) for x in swipe_coords] + ['300'],
+                        check=True, timeout=5
+                    )
+                    time.sleep(random.uniform(1, 2))
+                    continue
+                
+                # 如果不是直播内容，继续正常的处理流程
+                base64_data = get_screenshot_base64(udid)
+                if base64_data:
+                    api_response = send_screenshot_to_api(base64_data, udid, api_url)
+                    print(f"[{udid}] API返回: {api_response}")
+                    
+                    if api_response and isinstance(api_response, dict) and api_response.get('isInterested') == True:
+                        print(f"[{udid}] 准备点赞，点击坐标: ({center_x}, {center_y})")
+                        # 第一次点击
+                        subprocess.run(
+                            ['adb', '-s', udid, 'shell', 'input', 'tap', str(center_x), str(center_y)],
+                            check=True
+                        )
+                        time.sleep(0.01)  # 10毫秒间隔
+                        # 第二次点击
+                        subprocess.run(
+                            ['adb', '-s', udid, 'shell', 'input', 'tap', str(center_x), str(center_y)],
+                            check=True
+                        )
+                        print(f"[{udid}] 双击点赞完成")
+                        time.sleep(0.5)  # 等待点赞动画
+                        
+                        # 处理评论
+                        comments = get_comments_ui(udid)
+                        if comments:
+                            process_comments(udid, comments, device_info)
+                        
+                        # 随机等待
+                        wait_time = random.randint(3, 10)
+                        time.sleep(wait_time)
+                    
+                    # 使用缓存的坐标进行滑动
+                    subprocess.run(
+                        ['adb', '-s', udid, 'shell', 'input', 'swipe'] + 
+                        [str(x) for x in swipe_coords] + ['300'],
+                        check=True, timeout=5
+                    )
+                    time.sleep(random.uniform(1, 3))
+                    
+            except Exception as e:
+                print(f"[{udid}] 操作发生错误: {e}")
+                continue
         
         print(f"[{udid}] 抖音操作完成")
     except Exception as e:
         print(f"[{udid}] 抖音操作时发生错误: {e}")
+
+
+def check_device_ready(udid):
+    """
+    检查设备是否准备就绪
+    """
+    try:
+        # 检查设备是否响应
+        result = subprocess.run(
+            ['adb', '-s', udid, 'shell', 'getprop', 'sys.boot_completed'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=5
+        )
+        
+        if result.stdout.strip() != '1':
+            print(f"[{udid}] 设备未完全启动")
+            return False
+            
+        print(f"[{udid}] 设备已启动并响应")
+        
+        # 检查屏幕状态
+        screen_state = is_screen_on(udid)
+        print(f"[{udid}] 屏幕状态: {'亮起' if screen_state else '关闭'}")
+        
+        if not screen_state:
+            print(f"[{udid}] 尝试唤醒屏幕...")
+            # 尝试唤醒屏幕
+            subprocess.run(['adb', '-s', udid, 'shell', 'input', 'keyevent', 'KEYCODE_WAKEUP'])
+            time.sleep(2)
+            
+            if not is_screen_on(udid):
+                print(f"[{udid}] 尝试使用电源键唤醒...")
+                subprocess.run(['adb', '-s', udid, 'shell', 'input', 'keyevent', '26'])
+                time.sleep(2)
+        
+        # 无论如何都尝试解锁屏幕
+        unlock_screen(udid)
+        print(f"[{udid}] 设备检查完成，准备就绪")
+        return True
+        
+    except Exception as e:
+        print(f"[{udid}] 设备检查失败: {e}")
+        return False
 
 
 def multi_platform_operations(udid):
@@ -466,10 +684,15 @@ def multi_platform_operations(udid):
     """
     try:
         print(f"[{udid}] 开始执行多平台操作")
-
+        
+        # 检查设备状态
+        if not check_device_ready(udid):
+            print(f"[{udid}] 设备未就绪，跳过操作")
+            return
+        
         # 确保屏幕解锁
         ensure_screen_unlocked(udid)
-
+        
         # 1. 执行微信操作
         perform_operations(udid)  # 使用原有的微信操作函数
 
@@ -566,6 +789,25 @@ def get_comments_ui(udid):
         except:
             pass
         return []
+
+
+def process_comments(udid, comments, device_info):
+    """
+    处理评论内容
+    """
+    try:
+        print(f"[{udid}] 获取到的评论内容:")
+        for idx, comment in enumerate(comments, 1):
+            print(f"{idx}. {comment}")
+        
+        # 发送评论到API
+        comments_api_url = "https://iris.iigood.com/iris/v1/agent/comment"
+        comments_response = send_comments_to_api(comments, udid, comments_api_url)
+        if comments_response:
+            print(f"[{udid}] 评论API返回: {comments_response}")
+            
+    except Exception as e:
+        print(f"[{udid}] 处理评论失败: {e}")
 
 
 if __name__ == "__main__":
