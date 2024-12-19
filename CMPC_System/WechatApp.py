@@ -315,7 +315,7 @@ def send_screenshot_to_api(base64_data, udid, api_url):
             base64_data = f"data:image/png;base64,{base64_data}"
 
         payload = {
-            'profile': '喜欢汽车美女',
+            'profile': '喜欢美妆和美女',
             'content': '',
             'attachments': [base64_data]
         }
@@ -435,7 +435,7 @@ def perform_operations(udid):
         tap_point(udid, x2, y2)
 
         # 检查是否出现"我知道了"关键字
-        time.sleep(2)
+        time.sleep(5)
         if check_and_close_popup(udid, "我知道了"):
             print(f"[{udid}] 关闭了\"我知道了\"弹窗")
 
@@ -451,16 +451,36 @@ def perform_operations(udid):
         # 输入关键字搜索
         tap_point(udid, 500, 190)
         time.sleep(1)
-        input_text(udid, "GPT")
+        input_text(udid, "hair\ clippers")
         time.sleep(1)
         search_x, search_y = random.choice(search_list)
         print(f"[{udid}] 点击视频号搜索按钮坐标: ({search_x}, {search_y})")
         tap_point(udid, search_x, search_y)
-        time.sleep(2)  # 等待新的点击操作完成
-        
-        # 随机滑动次数
-        # slide = random.randint(25, 300)
-        # print(f"随机次数为：{slide}")
+        time.sleep(2)  # 等待搜索结果加载
+
+        #搜索结果视频点击区域结果x值为125-950，y值为1425-1910
+        video_list = [
+            (125, 1425),
+            (125, 1450),
+            (125, 1475),
+            (525, 1500),
+            (125, 1525),
+            (125, 1550),
+            (625, 1575),
+            (125, 1600),
+            (199, 1625),
+            (125, 1650),
+            (762, 1675),
+            (872, 1700),
+            (150, 1725),
+            (279, 1750),
+        ]
+        video_x, video_y = random.choice(video_list)
+        print(f"[{udid}] 点击视频号搜索结果视频坐标: ({video_x}, {video_y})")
+        tap_point(udid, video_x, video_y)
+        time.sleep(2)  # 等待视频加载
+
+        # 继续后续操作
         slide = 5
         time.sleep(5)
         # 设置API地址
@@ -845,7 +865,7 @@ def check_device_ready(udid):
 
         # 无论如何都尝解锁屏幕
         unlock_screen(udid)
-        print(f"[{udid}] 设备检查完成，准备就绪")
+        print(f"[{udid}] 设备检查完成，准备绪")
         return True
 
     except Exception as e:
@@ -999,7 +1019,7 @@ def process_comments(udid, comments, device_info):
         # 发送评论到API
         comments_api_url = "https://iris.iigood.com/iris/v1/agent/comment"
         payload = {
-            'profile': '喜欢汽车美女',
+            'profile': '喜欢美妆和美女',
             'comments': filtered_comments[:5],  # 只发送前5条评论
             'device_info': {
                 'udid': udid,
