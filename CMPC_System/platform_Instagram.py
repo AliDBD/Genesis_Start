@@ -252,7 +252,7 @@ def send_screenshot_to_api(base64_data, udid, api_url):
             base64_data = f"data:image/png;base64,{base64_data}"
             
         payload = {
-            'profile': '喜欢搞笑视频',
+            'profile': '喜欢美女和汽车',
             'content': '',
             'attachments': [base64_data]
         }
@@ -264,11 +264,12 @@ def send_screenshot_to_api(base64_data, udid, api_url):
         return None
 
 def get_comments_ui(udid):
-    """
-    使用UIAutomator获取评论区的评论内容，只保留8个字以上的评论
-    """
+    """使用UIAutomator获取评论区的评论内容"""
     try:
         print(f"[{udid}] 开始获取评论内容...")
+
+        # 等待评论区加载
+        time.sleep(2)
 
         # 使用UIAutomator dump当前界面
         result = subprocess.run(
@@ -279,7 +280,6 @@ def get_comments_ui(udid):
             check=True
         )
 
-        # 等待文件生成
         time.sleep(1)
 
         # 将xml文件拉到本地
@@ -293,25 +293,31 @@ def get_comments_ui(udid):
         tree = ET.parse(f'comments_{udid}.xml')
         root = tree.getroot()
 
-        # 接收评论内容
         comments = []
-        # 根据特定的TextView特征来识别评论
+        # 更新查找逻辑，更精确地定位评论内容
         for node in root.findall(".//node[@class='android.widget.TextView']"):
             text = node.get('text', '').strip()
-            # 过滤条件：长度大于8且不以特定文字开头
-            if text and len(text) >= 8 and not text.startswith(('点赞', '评论', '分享')):
+            # 更新过滤条件
+            if (text and 
+                not text.startswith(('回复', '查看翻译', '查看更多回复', '点赞', '分享')) and
+                not text in ['评论', '点赞', '分享', '回复'] and
+                not text.endswith('条回复') and
+                not text.endswith('月') and  # 过滤时间信息
+                len(text) > 1):  # 过滤掉单个字符
                 comments.append(text)
 
         # 清理临时文件
         os.remove(f'comments_{udid}.xml')
         subprocess.run(['adb', '-s', udid, 'shell', 'rm', '/data/local/tmp/ui.xml'])
 
-        print(f"[{udid}] 获取到{len(comments)}条8字以上的评论")
+        print(f"[{udid}] 获取到 {len(comments)} 条评论")
+        for i, comment in enumerate(comments, 1):
+            print(f"{i}. {comment}")
         return comments
 
     except Exception as e:
         print(f"[{udid}] 获取评论失败: {e}")
-        # 清理可能存在的临时文件
+        # 清理临时文件
         try:
             if os.path.exists(f'comments_{udid}.xml'):
                 os.remove(f'comments_{udid}.xml')
@@ -409,16 +415,25 @@ def human_swipe(udid, start_x, start_y, end_x, end_y, duration=300):
         print(f"[{udid}] 人工滑动模拟失败: {e}")
         return False
 
+def mock_api_response():
+    """模拟API响应，随机返回True或False"""
+    is_interested = random.choice([True, False])
+    return {
+        'isInsterested': is_interested,
+        'message': 'Mock API response',
+        'timestamp': datetime.now().isoformat()
+    }
+
 def open_instagram(udid):
     """打开 Instagram 应用"""
     try:
         print(f"[{udid}] 正在打开 Instagram...")
         
-        # 先强制停止 Instagram 应用
-        subprocess.run([
-            'adb', '-s', udid, 'shell', 
-            'am', 'force-stop', 'com.instagram.android'
-        ])
+        # # 先强制停止 Instagram 应用
+        # subprocess.run([
+        #     'adb', '-s', udid, 'shell', 
+        #     'am', 'force-stop', 'com.instagram.android'
+        # ])
         time.sleep(2)
         
         # 启动 Instagram 主界面
@@ -438,13 +453,71 @@ def open_instagram(udid):
         confirm_id_x = random.randint(930,1010)
         confirm_id_y = random.randint(2020,2090)
 
+         #针对搜索结果页面进行处理
+        up_swipes = random.randint(2, 5)
+        down_swipes = random.randint(1, 3)
+
         print(f"点击搜索按钮：（{search_id_x},{search_id_y}）")
         tap_point(udid, search_id_x, search_id_y)
         time.sleep(1)
-        input_text(udid,text="wig")#输入搜索文本
+        input_text(udid,text="food")#输入搜索文本
         tap_point(udid,confirm_id_x,confirm_id_y)
+        time.sleep(5)
 
-        slide = 2
+         #切换视频板块Reels
+        reels_id_x = random.randint(980, 1027)
+        reels_id_y = random.randint(350, 360)
+        print(f"[{udid}]点击Reels按钮：（{reels_id_x},{reels_id_y}）")
+        tap_point(udid, reels_id_x, reels_id_y)
+        time.sleep(3)
+
+        print(f"[{udid}] 准备在评论区滑动: 向上{up_swipes}次, 向下{down_swipes}次")
+
+        # 在搜索结果页面滑动
+        for _ in range(up_swipes):
+            # 生成随机的起点和终点坐标，保持在评论区域内
+            start_x = random.randint(301, 840)  # 在中心区域随机
+            end_x = random.randint(120, 970)
+            start_y = 1732  # 下部区域
+            end_y = 800    # 上部区域
+            
+            # 使用人工滑动
+            human_swipe(udid, start_x, start_y, end_x, end_y, 
+                        #滑动时间随机，模拟人类真实行为
+                        duration=random.randint(250, 350))
+            time.sleep(random.uniform(1, 3))
+
+        for _ in range(down_swipes):
+            # 生成随机的起点和终点坐标，保持在评论区域内
+            start_x = random.randint(120, 970)
+            end_x = random.randint(120, 970)
+            start_y = 1000    # 上部区域
+            end_y = 1800    # 下部区域
+            
+            # 使用人工滑动
+            human_swipe(udid, start_x, start_y, end_x, end_y, 
+                        duration=random.randint(250, 350))
+            time.sleep(random.uniform(0.5, 2))
+
+        # 随机等待一下，模拟人工浏览
+        time.sleep(random.uniform(0.5, 1.5))
+        #切换视频板块Reels
+        # reels_id_x = random.randint(980, 1027)
+        # reels_id_y = random.randint(1005, 1009)
+        # print(f"[{udid}]点击Reels按钮：（{reels_id_x},{reels_id_y}）")
+        # tap_point(udid, reels_id_x, reels_id_y)
+        # time.sleep(1)
+
+        # 在限定区域内随机选择一个点击位置
+        random_click_x = random.randint(130, 950)
+        random_click_y = random.randint(610, 1880)
+        
+        print(f"[{udid}] 在搜索结果页面随机点击位置: ({random_click_x}, {random_click_y})")
+        tap_point(udid, random_click_x, random_click_y)
+        time.sleep(2)  # 等待内容加载
+        
+        # 继续执行后续的视频滑动操作...
+        slide = 5
         api_url = "https://iris.iigood.com/iris/v1/agent/interest"
         for i in range(slide):
             #每次检查设备是否还连接，如果断开，则重新连接
@@ -463,14 +536,17 @@ def open_instagram(udid):
                 base64_data = get_screenshot_base64(udid)
                 if base64_data:
                     #发送到API，设置时间等待为10秒
-                    api_response = send_screenshot_to_api(base64_data, api_url, udid)
-                    print(f"[{udid}] API 响应: {api_response}")
+                    # api_response = send_screenshot_to_api(base64_data, udid, api_url)
+                    # print(f"[{udid}] API 响应: {api_response}")
+
+                    api_response = mock_api_response()
+                    print(f"[{udid}] 模拟 API 响应: {api_response}")
 
                     #设定基础等待时间
-                    time.sleep(3)
+                    base_wait_time = 3
                     #根据API返回结果中的isInsterested判断是否感兴趣
                     if api_response and isinstance(api_response, dict) and api_response.get('isInsterested') == True:
-                        time.sleep(3)
+                        time.sleep(base_wait_time)
                         #点击评论区坐标按钮
                         comment_id_x = random.randint(950, 1015)
                         comment_id_y = random.randint(1365, 1450)
@@ -519,21 +595,38 @@ def open_instagram(udid):
                                         duration=random.randint(250, 350))
                             time.sleep(random.uniform(0.5, 2))
                         #关闭评论区
-                        tap_point(udid, 1000, 1000)
+                        comment_id_x = random.randint(340, 650)
+                        comment_id_y = random.randint(370, 540)
+                        tap_point(udid, comment_id_x, comment_id_y)
                         time.sleep(1)
+
+                        #计算并执行总等待时间
+                        extra_wait_time = random.randint(1, 60)
+                        total_wait_time = base_wait_time + extra_wait_time
+                        print(f"[{udid}] 总等待时间: {total_wait_time}秒")
+                        time.sleep(total_wait_time)
                     else:
-                        print(f"[{udid}] 未感兴趣")
+                        print(f"{udid}isInterested为False,等待{base_wait_time}秒")
+                        time.sleep(base_wait_time)
+                    
+                    #滑动到下一页
+                    start_next_x = random.randint(460, 1000)  # 在中心区域随机
+                    end_next_x = random.randint(540, 840)
+                    start_next_y = 1650  # 下部区域
+                    end_next_y = 540    # 上部区域
+                    
+                    # 使用人工滑动
+                    human_swipe(udid, start_next_x, start_next_y, end_next_x, end_next_y, 
+                                duration=random.randint(250, 350))
+                    time.sleep(random.uniform(0.5, 2))
+                    time.sleep(1)
             except Exception as e:
-                print(f"[{udid}] 设备断开，重新连接失败: {e}")
-                return False
-
-
-        return True
-
-
+                print(f"[{udid}] 操作发生错误: {e}")
+                return
+        print(f"[{udid}] 操作完成") 
+            
     except Exception as e:
         print(f"[{udid}] 打开 Instagram 失败: {e}")
-        return False
 
 def back_to_home(udid):
     """返回手机桌面"""
@@ -594,6 +687,17 @@ def process_device(udid):
     except Exception as e:
         print(f"[{udid}] 设备处理过程出错: {e}")
 
+# 验证是否成功切换到 Reels（可选）
+def check_reels_tab(udid):
+    try:
+        # 使用 UI Automator 检查当前页面
+        subprocess.run(['adb', '-s', udid, 'shell', 'uiautomator', 'dump', '/data/local/tmp/ui.xml'])
+        result = subprocess.run(['adb', '-s', udid, 'shell', 'cat', '/data/local/tmp/ui.xml'],
+                              stdout=subprocess.PIPE, text=True)
+        return 'Reels' in result.stdout
+    except:
+        return False
+
 if __name__ == "__main__":
     # 获取所有连接的设备
     devices = get_connected_devices()
@@ -605,7 +709,7 @@ if __name__ == "__main__":
         # 创建线程列表
         threads = []
         
-        # 为每个设备创建并启动一个线程
+        # 为每个设备创建并启动一个单独线程
         for udid in devices:
             thread = threading.Thread(
                 target=process_device,
