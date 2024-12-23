@@ -315,7 +315,7 @@ def send_screenshot_to_api(base64_data, udid, api_url):
             base64_data = f"data:image/png;base64,{base64_data}"
 
         payload = {
-            'profile': '喜欢美妆和美女',
+            'profile': '喜欢汽车和美女',
             'content': '',
             'attachments': [base64_data]
         }
@@ -399,49 +399,35 @@ def perform_operations(udid):
         tap_point(udid, x1, y1)
         # 等待页面响应和加载
         time.sleep(2)  # 根据实际情况调整等待时间
-        # 视频号搜索按钮坐标
-        coordinateone_list = [
-            (880, 160),
-            (880, 190),
-            (890, 178),
-            (892, 177),
-            (889, 188),
-            (901, 191),
-            (899, 183),
-        ]
-        #确认搜索关键位置坐标
-        search_list = [
-            (960, 195),
-            (961, 190),
-            (957, 183),
-            (958, 185),
-            (950, 190),
-            (955, 189),
-            (957, 195),
-        ]
 
         # 第二个点击位置
-        coordinate_list = [
-            (966, 507),
-            (220, 430),
-            (250, 530),
-            (255, 540),
-            (480, 490),
-            (760, 515),
-            (855, 508)
-        ]
-        x2, y2 = random.choice(coordinate_list)
-        print(f"[{udid}] 准备点击第二个坐标视频号: ({x2}, {y2})")
-        tap_point(udid, x2, y2)
+        coordinate_list_x = random.randint(220,960)
+        coordinate_list_y = random.randint(430,540)
+
+        # 视频号搜索按钮坐标
+        coordinateone_list_x = random.randint(880,901)
+        coordinateone_list_y = random.randint(160,191)
+        #确认搜索关键位置坐标
+        search_list_x = random.randint(950,961)
+        search_list_y = random.randint(183,195)
+        #搜索结果视频点击区域结果x值为125-950，y值为1425-1910
+        video_list_x = random.randint(125,950)
+        video_list_y = random.randint(1425,1910)
+        #点赞坐标区域，X值为576-610，Y值为2110-2136
+        give_up_x = random.randint(576,600)
+        give_up_y = random.randint(2110,2162)
+
+        print(f"[{udid}] 准备点击第二个坐标视频号: ({coordinate_list_x}, {coordinate_list_y})")
+        tap_point(udid, coordinate_list_x, coordinate_list_y)
+
 
         # 检查是否出现"我知道了"关键字
         time.sleep(5)
         if check_and_close_popup(udid, "我知道了"):
             print(f"[{udid}] 关闭了\"我知道了\"弹窗")
 
-        new_x, new_y = random.choice(coordinateone_list)
-        print(f"[{udid}] 点击视频号搜索按钮坐标: ({new_x}, {new_y})")
-        tap_point(udid, new_x, new_y)
+        print(f"[{udid}] 点击视频号搜索按钮坐标: ({coordinateone_list_x}, {coordinateone_list_y})")
+        tap_point(udid, coordinateone_list_x, coordinateone_list_y)
         time.sleep(2)  # 等待新的点击操作完成
 
         # 点击搜索框确保获得焦点
@@ -451,33 +437,14 @@ def perform_operations(udid):
         # 输入关键字搜索
         tap_point(udid, 500, 190)
         time.sleep(1)
-        input_text(udid, "hair\ clippers")
+        input_text(udid, "Beauty")
         time.sleep(1)
-        search_x, search_y = random.choice(search_list)
-        print(f"[{udid}] 点击视频号搜索按钮坐标: ({search_x}, {search_y})")
-        tap_point(udid, search_x, search_y)
+        print(f"[{udid}] 点击视频号搜索按钮坐标: ({search_list_x}, {search_list_y})")
+        tap_point(udid, search_list_x, search_list_y)
         time.sleep(2)  # 等待搜索结果加载
 
-        #搜索结果视频点击区域结果x值为125-950，y值为1425-1910
-        video_list = [
-            (125, 1425),
-            (125, 1450),
-            (125, 1475),
-            (525, 1500),
-            (125, 1525),
-            (125, 1550),
-            (625, 1575),
-            (125, 1600),
-            (199, 1625),
-            (125, 1650),
-            (762, 1675),
-            (872, 1700),
-            (150, 1725),
-            (279, 1750),
-        ]
-        video_x, video_y = random.choice(video_list)
-        print(f"[{udid}] 点击视频号搜索结果视频坐标: ({video_x}, {video_y})")
-        tap_point(udid, video_x, video_y)
+        print(f"[{udid}] 点击视频号搜索结果视频坐标: ({video_list_x}, {video_list_y})")
+        tap_point(udid, video_list_x, video_list_y)
         time.sleep(2)  # 等待视频加载
 
         # 继续后续操作
@@ -505,6 +472,11 @@ def perform_operations(udid):
 
                     # 根据API返回结果中的isInterested值决定操作
                     if api_response and isinstance(api_response, dict) and api_response.get('isInterested') == True:
+                        
+                        # 点赞
+                        print(f"[{udid}] 点击视频号搜索结果视频点赞坐标: ({give_up_x}, {give_up_y})")
+                        tap_point(udid, give_up_x, give_up_y)
+                        time.sleep(1)  # 等待点赞加载
                         # 点击评论按钮
                         comment_list = [(970, 2085), (1000, 2085), (1030, 2085), (1060, 2085), (1090, 2085)]
                         comment_x, comment_y = random.choice(comment_list)
@@ -534,20 +506,28 @@ def perform_operations(udid):
 
                         # 在评论区滑动
                         for _ in range(up_swipes):
-                            subprocess.run(
-                                ['adb', '-s', udid, 'shell', 'input', 'swipe',
-                                 '540', '1800', '540', '1000', '300'],  # 增加滑动时间
-                                check=True, timeout=5
-                            )
-                            time.sleep(random.uniform(0.5, 3))
+                            # 生成随机的起点和终点坐标，保持在评论区域内
+                            start_x = random.randint(520, 560)  # 在中心区域随机
+                            end_x = random.randint(520, 560)
+                            start_y = 1800  # 下部区域
+                            end_y = 1000    # 上部区域
+                            
+                            # 使用人工滑动
+                            human_swipe(udid, start_x, start_y, end_x, end_y, 
+                                        duration=random.randint(250, 350))
+                            time.sleep(random.uniform(0.5, 2))
 
                         for _ in range(down_swipes):
-                            subprocess.run(
-                                ['adb', '-s', udid, 'shell', 'input', 'swipe',
-                                 '540', '1000', '540', '1800', '300'],  # 增加滑动时间
-                                check=True, timeout=5
-                            )
-                            time.sleep(random.uniform(0.5, 3))
+                            # 生成随机的起点和终点坐标，保持在评论区域内
+                            start_x = random.randint(520, 560)
+                            end_x = random.randint(520, 560)
+                            start_y = 1000    # 上部区域
+                            end_y = 1800    # 下部区域
+                            
+                            # 使用人工滑动
+                            human_swipe(udid, start_x, start_y, end_x, end_y, 
+                                        duration=random.randint(250, 350))
+                            time.sleep(random.uniform(0.5, 2))
 
                         # 关闭评论区
                         tap_point(udid, 540, 500)
@@ -847,7 +827,6 @@ def check_device_ready(udid):
             return False
 
         print(f"[{udid}] 设备已启动并响应")
-
         # 检查屏幕状态
         screen_state = is_screen_on(udid)
         print(f"[{udid}] 屏幕状态: {'亮起' if screen_state else '关闭'}")
@@ -1019,7 +998,7 @@ def process_comments(udid, comments, device_info):
         # 发送评论到API
         comments_api_url = "https://iris.iigood.com/iris/v1/agent/comment"
         payload = {
-            'profile': '喜欢美妆和美女',
+            'profile': '喜欢汽车和美女',
             'comments': filtered_comments[:5],  # 只发送前5条评论
             'device_info': {
                 'udid': udid,
@@ -1351,6 +1330,74 @@ def input_text(udid, text):
         
     except Exception as e:
         print(f"[{udid}] 输入文本失败: {e}")
+        return False
+
+
+def human_swipe(udid, start_x, start_y, end_x, end_y, duration=300):
+    """
+    模拟人类的滑动操作
+    参数:
+    - udid: 设备ID
+    - start_x, start_y: 起始坐标
+    - end_x, end_y: 结束坐标
+    - duration: 滑动持续时间(毫秒)
+    """
+    try:
+        # 计算基础偏移量
+        distance_x = end_x - start_x
+        distance_y = end_y - start_y
+        
+        # 生成3-5个中间点，使轨迹更自然
+        points_count = random.randint(3, 5)
+        points = [(start_x, start_y)]
+        
+        for i in range(points_count):
+            # 进度百分比
+            progress = (i + 1) / (points_count + 1)
+            
+            # 基础位置
+            base_x = start_x + distance_x * progress
+            base_y = start_y + distance_y * progress
+            
+            # 添加随机偏移，越靠近中间偏移越大
+            offset_factor = 1 - abs(0.5 - progress) * 2  # 在中间点达到最大
+            offset_x = random.randint(-30, 30) * offset_factor
+            
+            # 垂直方向的偏移较小
+            offset_y = random.randint(-10, 10) * offset_factor
+            
+            points.append((
+                int(base_x + offset_x),
+                int(base_y + offset_y)
+            ))
+        
+        points.append((end_x, end_y))
+        
+        # 计算每段的持续时间
+        segment_duration = duration // len(points)
+        
+        # 执行滑动
+        for i in range(len(points) - 1):
+            x1, y1 = points[i]
+            x2, y2 = points[i + 1]
+            
+            # 每段的实际持续时间添加随机变化
+            actual_duration = segment_duration + random.randint(-50, 50)
+            actual_duration = max(50, min(actual_duration, 500))  # 确保在合理范围内
+            
+            subprocess.run(
+                ['adb', '-s', udid, 'shell', 'input', 'swipe',
+                 str(x1), str(y1), str(x2), str(y2), str(actual_duration)],
+                check=True, timeout=5
+            )
+            
+            # 每段之间添加极短的随机停顿
+            time.sleep(random.uniform(0.01, 0.03))
+            
+        return True
+        
+    except Exception as e:
+        print(f"[{udid}] 人工滑动模拟失败: {e}")
         return False
 
 
