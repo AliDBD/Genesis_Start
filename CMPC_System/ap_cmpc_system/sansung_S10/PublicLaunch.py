@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 # -- coding: utf-8 --
+'''
+SAMSUNG S10E机型的通用启动代码
+可在此基础上进行功能细化
+'''
 import subprocess
 import time
 import logging
