@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -- coding: utf-8 --
-import subprocess
+# @Time : 2024/12/24 11:18
+# @Author : Genesis Ai
+# @File : platform_tiktok.py
+
 import time
 import logging
 import sys
@@ -19,13 +22,13 @@ import cv2
 import numpy as np
 from io import BytesIO
 
-
 # 设置默认编码为utf-8
 sys.stdout.reconfigure(encoding='utf-8')
 sys.stderr.reconfigure(encoding='utf-8')
 
 # 日志配置
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(threadName)s] %(message)s")
+
 
 def input_text(udid, text):
     """使用直接的adb shell input text 命令输入文本"""
@@ -35,37 +38,38 @@ def input_text(udid, text):
         input_box_y = random.randint(189, 235)
         tap_point(udid, input_box_x, input_box_y)
         time.sleep(0.5)
-         # 清除现有文本
+        # 清除现有文本
         subprocess.run(['adb', '-s', udid, 'shell', 'input', 'keyevent', 'KEYCODE_CLEAR'])
         time.sleep(1)
         # 直接使用完整的命令字符串
         cmd = f'adb -s {udid} shell input text "{text}"'
         subprocess.run(cmd, shell=True)
-        
+
         print(f"[{udid}] 文本输入完成")
         return True
     except Exception as e:
         print(f"[{udid}] 输入文本失败: {e}")
         return False
 
+
 def get_connected_devices():
     """获取已连接的设备列表"""
     try:
         result = subprocess.run(
-            ['adb', 'devices'], 
-            stdout=subprocess.PIPE, 
+            ['adb', 'devices'],
+            stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
             encoding='utf-8',
             errors='ignore'
         )
-        
+
         print("adb devices 输出:", result.stdout)
         print("错误输出:", result.stderr)
-        
+
         devices = []
         unauthorized_devices = []
-        
+
         for line in result.stdout.strip().split('\n')[1:]:
             if line.strip():
                 parts = line.split()
@@ -76,7 +80,7 @@ def get_connected_devices():
                         devices.append(device_id)
                     elif status == 'unauthorized':
                         unauthorized_devices.append(device_id)
-        
+
         if unauthorized_devices:
             print("\n检测到未授权的设备:")
             for device in unauthorized_devices:
@@ -88,12 +92,13 @@ def get_connected_devices():
                 print("   - 断开并重新连接 USB 线")
                 print("   - 在设备上关闭再打开 USB 调试")
                 print("   - 检查 USB 连接模式是否正确\n")
-        
+
         print(f"已授权的设备: {devices}")
         return devices
     except Exception as e:
         print(f"获取设备列表时出错: {e}")
         return []
+
 
 def is_screen_on(udid):
     """检查屏幕是否亮起"""
@@ -111,6 +116,7 @@ def is_screen_on(udid):
         print(f"[{udid}] 检查屏幕状态时出错: {e}")
         return True
 
+
 def unlock_screen(udid):
     """解锁设备屏幕（适用于无密码锁屏）"""
     print(f"[{udid}] 正在解锁屏幕")
@@ -121,6 +127,7 @@ def unlock_screen(udid):
     else:
         print(f"[{udid}] 无法解锁屏幕")
 
+
 def ensure_screen_unlocked(udid):
     """确保屏幕被唤醒并解锁"""
     if not is_screen_on(udid):
@@ -128,6 +135,7 @@ def ensure_screen_unlocked(udid):
         subprocess.run(['adb', '-s', udid, 'shell', 'input', 'keyevent', 'KEYCODE_WAKEUP'])
         time.sleep(1)
     unlock_screen(udid)
+
 
 def get_screen_size(udid):
     """获取设备的屏幕分辨率"""
@@ -150,6 +158,7 @@ def get_screen_size(udid):
     except Exception as e:
         print(f"[{udid}] 无法获取屏幕尺寸: {e}")
         return None, None
+
 
 def check_device_status(udid):
     """检查设备状态"""
@@ -190,6 +199,7 @@ def check_device_status(udid):
         print(f"[{udid}] 检查设备状态失败: {e}")
         return None
 
+
 def get_screenshot_base64(udid):
     """
     获取设备截图并转换为base64，不保存到本地
@@ -208,20 +218,20 @@ def get_screenshot_base64(udid):
         # 截取新图片并直接读取为base64
         print(f"[{udid}] 正在截取屏幕...")
         subprocess.run(['adb', '-s', udid, 'shell', 'screencap', '-p', device_filename], check=True)
-        
+
         # 直接从设备读取文件内容并转换为base64
         result = subprocess.run(
             ['adb', '-s', udid, 'shell', 'cat', device_filename],
             stdout=subprocess.PIPE,
             check=True
         )
-        
+
         # 转换为base64
         base64_data = base64.b64encode(result.stdout).decode('utf-8')
-        
+
         # 清理设备上的临时文件
         subprocess.run(['adb', '-s', udid, 'shell', 'rm', '-f', device_filename], check=True)
-        
+
         print(f"[{udid}] Base64长度: {len(base64_data)}")
         return base64_data
 
@@ -234,6 +244,7 @@ def get_screenshot_base64(udid):
             pass
         return None
 
+
 def send_screenshot_to_api(base64_data, udid, api_url):
     """
     发送base64图片数据到API
@@ -245,7 +256,7 @@ def send_screenshot_to_api(base64_data, udid, api_url):
         # 确保base64数据格式正确
         if not base64_data.startswith('data:image/'):
             base64_data = f"data:image/png;base64,{base64_data}"
-            
+
         payload = {
             'profile': '喜欢美女和汽车',
             'content': '',
@@ -257,6 +268,7 @@ def send_screenshot_to_api(base64_data, udid, api_url):
     except Exception as e:
         print(f"[{udid}] API请求失败: {e}")
         return None
+
 
 def get_comments_ui(udid):
     """使用UIAutomator获取评论区的评论内容"""
@@ -293,12 +305,12 @@ def get_comments_ui(udid):
         for node in root.findall(".//node[@class='android.widget.TextView']"):
             text = node.get('text', '').strip()
             # 更新过滤条件
-            if (text and 
-                not text.startswith(('回复', '查看翻译', '查看更多回复', '点赞', '分享')) and
-                not text in ['评论', '点赞', '分享', '回复'] and
-                not text.endswith('条回复') and
-                not text.endswith('月') and  # 过滤时间信息
-                len(text) > 1):  # 过滤掉单个字符
+            if (text and
+                    not text.startswith(('回复', '查看翻译', '查看更多回复', '点赞', '分享')) and
+                    not text in ['评论', '点赞', '分享', '回复'] and
+                    not text.endswith('条回复') and
+                    not text.endswith('月') and  # 过滤时间信息
+                    len(text) > 1):  # 过滤掉单个字符
                 comments.append(text)
 
         # 清理临时文件
@@ -320,6 +332,7 @@ def get_comments_ui(udid):
         except:
             pass
         return []
+
 
 def send_comments_to_api(comments, udid, api_url):
     """
@@ -343,6 +356,7 @@ def send_comments_to_api(comments, udid, api_url):
         print(f"[{udid}] 发送评论失败: {e}")
     return None
 
+
 def human_swipe(udid, start_x, start_y, end_x, end_y, duration=300):
     """
     模拟人类的滑动操作
@@ -356,59 +370,60 @@ def human_swipe(udid, start_x, start_y, end_x, end_y, duration=300):
         # 计算基础偏移量
         distance_x = end_x - start_x
         distance_y = end_y - start_y
-        
+
         # 生成3-5个中间点，使轨迹更自然
         points_count = random.randint(3, 5)
         points = [(start_x, start_y)]
-        
+
         for i in range(points_count):
             # 进度百分比
             progress = (i + 1) / (points_count + 1)
-            
+
             # 基础位置
             base_x = start_x + distance_x * progress
             base_y = start_y + distance_y * progress
-            
+
             # 添加随机偏移，越靠近中间偏移越大
             offset_factor = 1 - abs(0.5 - progress) * 2  # 在中间点达到最大
             offset_x = random.randint(-30, 30) * offset_factor
-            
+
             # 垂直方向的偏移较小
             offset_y = random.randint(-10, 10) * offset_factor
-            
+
             points.append((
                 int(base_x + offset_x),
                 int(base_y + offset_y)
             ))
-        
+
         points.append((end_x, end_y))
-        
+
         # 计算每段的持续时间
         segment_duration = duration // len(points)
-        
+
         # 执行滑动
         for i in range(len(points) - 1):
             x1, y1 = points[i]
             x2, y2 = points[i + 1]
-            
+
             # 每段的实际持续时间添加随机变化
             actual_duration = segment_duration + random.randint(-50, 50)
             actual_duration = max(50, min(actual_duration, 500))  # 确保在合理范围内
-            
+
             subprocess.run(
                 ['adb', '-s', udid, 'shell', 'input', 'swipe',
                  str(x1), str(y1), str(x2), str(y2), str(actual_duration)],
                 check=True, timeout=5
             )
-            
+
             # 每段之间添加极短的随机停顿
             time.sleep(random.uniform(0.01, 0.03))
-            
+
         return True
-        
+
     except Exception as e:
         print(f"[{udid}] 人工滑动模拟失败: {e}")
         return False
+
 
 def mock_api_response():
     """模拟API响应，随机返回True或False"""
@@ -418,6 +433,7 @@ def mock_api_response():
         'message': 'Mock API response',
         'timestamp': datetime.now().isoformat()
     }
+
 
 def capture_screenshot_from_phone(udid, screenshot_path="/sdcard/screenshot.png", local_path="screenshot.png"):
     """
@@ -429,8 +445,8 @@ def capture_screenshot_from_phone(udid, screenshot_path="/sdcard/screenshot.png"
     try:
         # 清理手机上的旧截图（如果存在）
         print(f"[{udid}] 清理旧截图...")
-        subprocess.run(['adb', '-s', udid, 'shell', 'rm', '-f', screenshot_path], 
-                      stderr=subprocess.DEVNULL)  # 忽略错误输出
+        subprocess.run(['adb', '-s', udid, 'shell', 'rm', '-f', screenshot_path],
+                       stderr=subprocess.DEVNULL)  # 忽略错误输出
 
         # 截图并保存到手机路径
         print(f"[{udid}] 截图中...")
@@ -448,7 +464,7 @@ def capture_screenshot_from_phone(udid, screenshot_path="/sdcard/screenshot.png"
             stderr=subprocess.PIPE,
             text=True
         )
-        
+
         if check_result.returncode != 0:
             print(f"[{udid}] 截图未成功保存到设备")
             return None
@@ -459,10 +475,11 @@ def capture_screenshot_from_phone(udid, screenshot_path="/sdcard/screenshot.png"
 
         print(f"[{udid}] 截图已保存到本地：{local_path}")
         return local_path
-        
+
     except subprocess.CalledProcessError as e:
         print(f"[{udid}] 截图失败: {e}")
         return None
+
 
 def convert_image_to_base64(image_path):
     """
@@ -478,6 +495,7 @@ def convert_image_to_base64(image_path):
     except Exception as e:
         print(f"图片转换为 Base64 失败: {e}")
         return None
+
 
 def decode_base64_to_image(base64_data):
     """
@@ -530,8 +548,6 @@ def preprocess_image_from_base64(base64_data):
     return binary
 
 
-
-
 def extract_comments_from_base64(base64_data):
     """
     从 Base64 数据中提取评论信息
@@ -565,59 +581,58 @@ def extract_comments_from_base64(base64_data):
     return comments
 
 
-
 def get_comments_from_screenshot(udid):
     """使用截图方式获取评论内容"""
     try:
         print(f"[{udid}] 开始通过截图获取评论内容...")
-        
+
         # 等待评论区加载
         time.sleep(2)
-        
+
         # 确保目标目录存在
         save_dir = r"E:\代码截图temp"
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
             print(f"[{udid}] 创建保存目录: {save_dir}")
-        
+
         # 生成唯一的文件名
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         local_filename = f"comments_{udid}_{timestamp}.png"
         local_path = os.path.join(save_dir, local_filename)
         device_path = f"/sdcard/comments_{udid}.png"
-        
+
         # 直接使用adb命令截图
         print(f"[{udid}] 开始截取评论区...")
         subprocess.run(['adb', '-s', udid, 'shell', 'screencap', '-p', device_path], check=True)
-        
+
         # 将截图从设备拷贝到本地
         print(f"[{udid}] 正在保存截图到本地: {local_path}")
         subprocess.run(['adb', '-s', udid, 'pull', device_path, local_path], check=True)
-        
+
         if not os.path.exists(local_path):
             print(f"[{udid}] 截图保存失败")
             return []
-            
+
         print(f"[{udid}] 截图已成功保存到: {local_path}")
-        
+
         # 将截图转换为Base64
         base64_data = convert_image_to_base64(local_path)
         if not base64_data:
             print(f"[{udid}] 图片转换失败")
             return []
-            
+
         # 预处理图像并提取评论
         processed_img = preprocess_image_from_base64(base64_data)
         if processed_img is None:
             print(f"[{udid}] 图像预处理失败")
             return []
-            
+
         # 使用OCR提取评论
         comments = extract_comments_from_base64(base64_data)
-        
+
         # 清理设备上的临时文件
         subprocess.run(['adb', '-s', udid, 'shell', f'rm {device_path}'])
-        
+
         if comments:
             print(f"[{udid}] 成功获取 {len(comments)} 条评论:")
             for i, comment in enumerate(comments, 1):
@@ -626,23 +641,24 @@ def get_comments_from_screenshot(udid):
         else:
             print(f"[{udid}] 未能获取到评论")
             return []
-            
+
     except Exception as e:
         print(f"[{udid}] 获取评论失败: {e}")
         return []
+
 
 def open_instagram(udid):
     """打开 Instagram 应用，进行Instagram的一系列操作"""
     try:
         print(f"[{udid}] 正在打开 Instagram...")
-        
+
         # # 先强制停止 Instagram 应用
         subprocess.run([
-            'adb', '-s', udid, 'shell', 
+            'adb', '-s', udid, 'shell',
             'am', 'force-stop', 'com.instagram.android'
         ])
         time.sleep(2)
-        
+
         # 启动 Instagram 主界面
         subprocess.run([
             'adb', '-s', udid, 'shell',
@@ -652,26 +668,26 @@ def open_instagram(udid):
         time.sleep(4)  # 等待应用启动
         print(f"[{udid}] Instagram 已启动")
 
-        #首页搜索按钮图标坐标
+        # 首页搜索按钮图标坐标
         search_id_x = random.randint(295, 372)
         search_id_y = random.randint(2045, 2103)
 
-        #确认搜索按钮坐标
-        confirm_id_x = random.randint(930,1010)
-        confirm_id_y = random.randint(2020,2090)
+        # 确认搜索按钮坐标
+        confirm_id_x = random.randint(930, 1010)
+        confirm_id_y = random.randint(2020, 2090)
 
-         #针对搜索结果页面进行处理
+        # 针对搜索结果页面进行处理
         up_swipes = random.randint(1, 3)
         down_swipes = random.randint(1, 3)
 
         print(f"点击搜索按钮：（{search_id_x},{search_id_y}）")
         tap_point(udid, search_id_x, search_id_y)
         time.sleep(1)
-        input_text(udid,text="Young\ Woman")#输入搜索文本
-        tap_point(udid,confirm_id_x,confirm_id_y)
+        input_text(udid, text="Young\ Woman")  # 输入搜索文本
+        tap_point(udid, confirm_id_x, confirm_id_y)
         time.sleep(5)
 
-         #切换视频板块Reels
+        # 切换视频板块Reels
         reels_id_x = random.randint(980, 1027)
         reels_id_y = random.randint(350, 360)
         print(f"[{udid}]点击Reels按钮：（{reels_id_x},{reels_id_y}）")
@@ -686,11 +702,11 @@ def open_instagram(udid):
             start_x = random.randint(301, 840)  # 在中心区域随机
             end_x = random.randint(120, 970)
             start_y = 1732  # 下部区域
-            end_y = 800    # 上部区域
-            
+            end_y = 800  # 上部区域
+
             # 使用人工滑动
-            human_swipe(udid, start_x, start_y, end_x, end_y, 
-                        #滑动时间随机，模拟人类真实行为
+            human_swipe(udid, start_x, start_y, end_x, end_y,
+                        # 滑动时间随机，模拟人类真实行为
                         duration=random.randint(250, 350))
             time.sleep(random.uniform(1, 3))
 
@@ -698,11 +714,11 @@ def open_instagram(udid):
             # 生成随机的起点和终点坐标，保持在区域内
             start_x = random.randint(120, 970)
             end_x = random.randint(120, 970)
-            start_y = 1000    # 上部区域
-            end_y = 1800    # 下部区域
-            
+            start_y = 1000  # 上部区域
+            end_y = 1800  # 下部区域
+
             # 使用人工滑动
-            human_swipe(udid, start_x, start_y, end_x, end_y, 
+            human_swipe(udid, start_x, start_y, end_x, end_y,
                         duration=random.randint(250, 350))
             time.sleep(random.uniform(0.5, 2))
 
@@ -712,18 +728,18 @@ def open_instagram(udid):
         # 在限定区域内随机选择一个点击位置
         random_click_x = random.randint(130, 950)
         random_click_y = random.randint(610, 1880)
-        
+
         print(f"[{udid}] 在搜索结果页面随机点击位置: ({random_click_x}, {random_click_y})")
         tap_point(udid, random_click_x, random_click_y)
         time.sleep(2)  # 等待内容加载
-        
+
         # 继续执行后续的视频滑动操作...
         slide = 4
         api_url = "https://iris.iigood.com/iris/v1/agent/interest"
 
         # 开始循环滑动视频
         for i in range(slide):
-            #每次检查设备是否还连接，如果断开，则重新连接
+            # 每次检查设备是否还连接，如果断开，则重新连接
             if not check_device_status(udid):
                 try:
                     print(f"[{udid}] 设备断开，重新连接")
@@ -732,10 +748,10 @@ def open_instagram(udid):
                 except Exception as e:
                     print(f"[{udid}] 设备断开，重新连接失败: {e}")
                     return
-            
-            print(f"进行第{i+1}次滑动")
+
+            print(f"进行第{i + 1}次滑动")
             try:
-                #获取截图转换为Base64
+                # 获取截图转换为Base64
                 base64_data = get_screenshot_base64(udid)
                 if not base64_data:
                     print(f"[{udid}] 获取截图失败")
@@ -752,7 +768,7 @@ def open_instagram(udid):
                 if api_response and isinstance(api_response, dict) and api_response.get('isInsterested') == True:
                     # 先等待基础时间
                     time.sleep(base_wait_time)
-                    
+
                     # 点击评论区
                     comment_id_x = random.randint(950, 1015)
                     comment_id_y = random.randint(1365, 1450)
@@ -761,20 +777,20 @@ def open_instagram(udid):
                     time.sleep(2)  # 内容加载
 
                     # 评论区滑动
-                    up_swipes = random.randint(2,5)
-                    down_swipes = random.randint(1,5)
+                    up_swipes = random.randint(2, 5)
+                    down_swipes = random.randint(1, 5)
                     print(f"[{udid}] 上下滑动次数: {up_swipes}次, {down_swipes}次")
-                    
+
                     # 在评论区滑动
                     for _ in range(up_swipes):
                         # 生成随机的起点和终点坐标，保持在评论区域内
                         start_x = random.randint(520, 560)  # 在中心区域随机
                         end_x = random.randint(520, 560)
                         start_y = 1800  # 下部区域
-                        end_y = 1000    # 上部区域
-                        
+                        end_y = 1000  # 上部区域
+
                         # 使用人工滑动
-                        human_swipe(udid, start_x, start_y, end_x, end_y, 
+                        human_swipe(udid, start_x, start_y, end_x, end_y,
                                     duration=random.randint(250, 350))
                         time.sleep(random.uniform(0.5, 2))
 
@@ -782,11 +798,11 @@ def open_instagram(udid):
                         # 生成随机的起点和终点坐标，保持在评论区域内
                         start_x = random.randint(520, 560)
                         end_x = random.randint(520, 560)
-                        start_y = 1000    # 上部区域
-                        end_y = 1800    # 下部区域
-                        
+                        start_y = 1000  # 上部区域
+                        end_y = 1800  # 下部区域
+
                         # 使用人工滑动
-                        human_swipe(udid, start_x, start_y, end_x, end_y, 
+                        human_swipe(udid, start_x, start_y, end_x, end_y,
                                     duration=random.randint(250, 350))
                         time.sleep(random.uniform(0.5, 2))
 
@@ -808,7 +824,7 @@ def open_instagram(udid):
                     comment_id_y = random.randint(370, 540)
                     tap_point(udid, comment_id_x, comment_id_y)
                     time.sleep(1)
-                    #双击屏幕点赞
+                    # 双击屏幕点赞
                     randomclick_number = random.randint(1, 9)
                     print(f"[{udid}] 随机生成的数是: {randomclick_number}")
                     if randomclick_number % 2 == 0:
@@ -818,7 +834,7 @@ def open_instagram(udid):
                         tap_point(udid, 500, 1500)
                     else:
                         print(f"[{udid}] 随机数为奇数，跳过双击点赞操作")
-                    #随机选择是否点关注
+                    # 随机选择是否点关注
                     random_number = random.randint(1, 9)
                     print(f"[{udid}] 随机生成的数是: {random_number}")
                     if random_number % 2 == 0:
@@ -836,16 +852,16 @@ def open_instagram(udid):
                     print(f"[{udid}] isInterested为False,等待{base_wait_time}秒")
                     time.sleep(base_wait_time)
                     swipe_to_next_video(udid)
-                
-                # 如果不是最后一次循环，执行滑动
+
+                    # 如果不是最后一次循环，执行滑动
                     if i < slide - 1:
                         print(f"[{udid}] 滑动到下一个视频")
                         start_next_x = random.randint(460, 1000)
                         end_next_x = random.randint(540, 840)
                         start_next_y = 1650
                         end_next_y = 540
-                        
-                        human_swipe(udid, start_next_x, start_next_y, end_next_x, end_next_y, 
+
+                        human_swipe(udid, start_next_x, start_next_y, end_next_x, end_next_y,
                                     duration=random.randint(250, 350))
                         time.sleep(random.uniform(0.5, 2))
 
@@ -857,7 +873,7 @@ def open_instagram(udid):
         # 关闭应用
         close_instagram(udid)
         return True
-        
+
     except Exception as e:
         print(f"[{udid}] Instagram 操作失败: {e}")
         try:
@@ -865,6 +881,8 @@ def open_instagram(udid):
         except Exception as close_error:
             print(f"[{udid}] 关闭应用失败: {close_error}")
         return False
+
+
 def swipe_to_next_video(udid):
     print(f"[{udid}] 开始滑动到下一个视频...")
     # 打印滑动开始时间
@@ -880,16 +898,17 @@ def swipe_to_next_video(udid):
 
     print(f"[{udid}] 滑动完成")
 
+
 def find_keyword_coordinates(image_path, keyword="关注"):
     """
     从图片中查找指定关键字的位置，并返回其坐标(关注)
     """
     # 加载图像
     img = cv2.imread(image_path)
-    
+
     # 转换为灰度图像
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    
+
     # 使用 pytesseract 提取文字和位置信息
     data = pytesseract.image_to_data(gray, lang='chi_sim', output_type=pytesseract.Output.DICT)
 
@@ -901,9 +920,10 @@ def find_keyword_coordinates(image_path, keyword="关注"):
             center_x, center_y = x + w // 2, y + h // 2
             print(f"找到关键字 '{keyword}'，中心坐标: ({center_x}, {center_y})")
             return center_x, center_y
-    
+
     print(f"未找到关键字 '{keyword}'")
     return None
+
 
 def click_keyword(udid, image_path, keyword="关注"):
     """
@@ -930,6 +950,7 @@ def back_to_home(udid):
         print(f"[{udid}] 返回桌面失败: {e}")
         return False
 
+
 def tap_point(udid, x, y):
     """点击指定坐标"""
     try:
@@ -940,17 +961,18 @@ def tap_point(udid, x, y):
         print(f"[{udid}] 点击失败: {e}")
         return False
 
+
 def close_instagram(udid):
     """关闭 Instagram 应用并返回桌面"""
     try:
         print(f"[{udid}] 正在关闭 Instagram...")
         # 强制停止 Instagram 应用
         subprocess.run([
-            'adb', '-s', udid, 'shell', 
+            'adb', '-s', udid, 'shell',
             'am', 'force-stop', 'com.instagram.android'
         ], check=True)
         time.sleep(1)
-        
+
         # 返回桌面
         back_to_home(udid)
         print(f"[{udid}] Instagram 已关闭并返回桌面")
@@ -958,6 +980,7 @@ def close_instagram(udid):
     except Exception as e:
         print(f"[{udid}] 关闭 Instagram 失败: {e}")
         return False
+
 
 def process_device(udid):
     """处理单个设备的所有操作流程"""
@@ -973,18 +996,19 @@ def process_device(udid):
             print(f"- 屏幕状态: {'已亮起' if status['screen_on'] else '已关闭'}")
             print(f"- 电池电量: {status['battery_level']}%")
             print(f"- WiFi状态: {'已连接' if status['wifi_connected'] else '未连接'}")
-            
+
             if not status['screen_on']:
                 ensure_screen_unlocked(udid)
-            
+
             # 先返回桌面
             back_to_home(udid)
             time.sleep(1)
-            
+
             # 打开 Instagram 并执行操作
             open_instagram(udid)
     except Exception as e:
         print(f"[{udid}] 设备处理过程出错: {e}")
+
 
 # 验证是否成功切换到 Reels（可选）
 def check_reels_tab(udid):
@@ -992,10 +1016,11 @@ def check_reels_tab(udid):
         # 使用 UI Automator 检查当前页面
         subprocess.run(['adb', '-s', udid, 'shell', 'uiautomator', 'dump', '/data/local/tmp/ui.xml'])
         result = subprocess.run(['adb', '-s', udid, 'shell', 'cat', '/data/local/tmp/ui.xml'],
-                              stdout=subprocess.PIPE, text=True)
+                                stdout=subprocess.PIPE, text=True)
         return 'Reels' in result.stdout
     except:
         return False
+
 
 def parse_comments(text):
     """
@@ -1034,6 +1059,7 @@ def clean_text(text):
 
 if __name__ == "__main__":
     import pytesseract
+
     pytesseract.pytesseract.tesseract_cmd = r"D:\Software\Tesseract-OCR\tesseract.exe"
     # 获取所有连接的设备
     devices = get_connected_devices()
@@ -1041,10 +1067,10 @@ if __name__ == "__main__":
         print("没有检测到连接的设备")
     else:
         print(f"检测到 {len(devices)} 台设备，开始并行处理")
-        
+
         # 创建线程列表
         threads = []
-        
+
         # 为每个设备创建并启动一个单独线程
         for udid in devices:
             thread = threading.Thread(
@@ -1055,9 +1081,9 @@ if __name__ == "__main__":
             threads.append(thread)
             thread.start()
             print(f"已启动设备 {udid} 的处理线程")
-        
+
         # 等待所有线程完成
         for thread in threads:
             thread.join()
-        
+
         print("\n所有设备处理完成")
