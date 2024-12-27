@@ -16,9 +16,18 @@ import subprocess
 import pytesseract
 from PIL import Image
 import cv2
+import logging
+import subprocess
+import time
+import random
+import cv2
+import numpy as np
+import pytesseract
+from io import BytesIO
 import numpy as np
 import xml.etree.ElementTree as ET
 from io import BytesIO
+import string  # 添加到其他 import 语句部分
 
 
 # 设置默认编码为utf-8
@@ -26,6 +35,9 @@ sys.stdout.reconfigure(encoding='utf-8')
 
 # 日志配置
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(threadName)s] %(message)s")
+current_directory = os.path.dirname(os.path.abspath(__file__))
+log_file_path = os.path.join(current_directory, 'app.log')
+
 
 def input_text(udid, text):
     """使用直接的adb shell input text 命令输入文本，并模拟人工输入速度"""
@@ -42,7 +54,7 @@ def input_text(udid, text):
 
         # 将文本分成单个字符，并添加随机延迟
         for char in text:
-            # 对特殊字符进行转义
+            
             if char in [' ', '"', "'", '\\', '(', ')', '[', ']', '{', '}', '$', '&', '*', '<', '>', '|']:
                 escaped_char = f"\\{char}"
             else:
@@ -226,42 +238,70 @@ def base64_to_temp_image_file(base64_data, temp_path="temp_keyword_image.png"):
         return None
 
 #截图并转为base64返回
+# def get_screenshot_base64(udid):
+#     try:
+#         logging.info(f"[{udid}] 开始截图")
+#         subprocess.run(['adb', '-s', udid, 'shell', 'rm', '-f', '/data/local/tmp/screen*.png'], check=True)
+#         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+#         device_filename = f"/data/local/tmp/screen_{timestamp}.png"
+#         subprocess.run(['adb', '-s', udid, 'shell', 'screencap', '-p', device_filename], check=True)
+#         result = subprocess.run(
+#             ['adb', '-s', udid, 'shell', 'cat', device_filename],
+#             stdout=subprocess.PIPE,
+#             check=True
+#         )
+#         logging.debug(f"[{udid}] 原始数据长度: {len(result.stdout)}")
+#         base64_data = base64.b64encode(result.stdout).decode('utf-8')
+#         logging.debug(f"[{udid}] Base64数据长度: {len(base64_data)}")
+#         subprocess.run(['adb', '-s', udid, 'shell', 'rm', '-f', device_filename], check=True)
+#         return base64_data
+#     except Exception as e:
+#         logging.error(f"[{udid}] 截图失败: {e}")
+#         try:
+#             subprocess.run(['adb', '-s', udid, 'shell', 'rm', '-f', '/data/local/tmp/screen*.png'])
+#         except:
+#             pass
+#         return None
 def get_screenshot_base64(udid):
+    """
+    截取当前手机屏幕，将截图转换为Base64后返回，并删除手机端与本地的临时截图文件。
+    """
+    # 1. 随机生成截图文件名（也可使用时间戳等）
+    random_str = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
+    filename = f"screenshot_{int(time.time())}_{random_str}.png"
+
+    # 2. 定义手机端的截图路径和本地保存路径
+    phone_path = f"/sdcard/{filename}"       # 手机存储路径
+    local_path = os.path.join(os.getcwd(), filename)  # 本地保存路径
+
+    # 3. 依次执行的 ADB 命令
+    cmd_screencap = f"adb -s {udid} shell screencap -p {phone_path}"
+    cmd_pull = f"adb -s {udid} pull {phone_path} {local_path}"
+    cmd_rm_phone = f"adb -s {udid} shell rm {phone_path}"
+
+
     try:
-        # 清理设备上可能存在的旧截图
-        subprocess.run(['adb', '-s', udid, 'shell', 'rm', '-f', '/data/local/tmp/screen*.png'], check=True)
+        # 3.1 手机端截图
+        subprocess.run(cmd_screencap, shell=True, check=True)
 
-        # 生成带时间戳的文件名，确保唯一性
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_%f')
-        device_filename = f"/data/local/tmp/screen_{timestamp}.png"
+        # 3.2 将截图拉取至本地
+        subprocess.run(cmd_pull, shell=True, check=True)
 
-        # 截取新图片并直接读取为base64
-        subprocess.run(['adb', '-s', udid, 'shell', 'screencap', '-p', device_filename], check=True)
-        
-        # 直接从设备读取文件内容并转换为base64
-        result = subprocess.run(
-            ['adb', '-s', udid, 'shell', 'cat', device_filename],
-            stdout=subprocess.PIPE,
-            check=True
-        )
-        
-        # 转换为base64
-        base64_data = base64.b64encode(result.stdout).decode('utf-8')
-        
-        # 清理设备上的临时文件
-        subprocess.run(['adb', '-s', udid, 'shell', 'rm', '-f', device_filename], check=True)
-        
-        print(f"[{udid}] Base64长度: {len(base64_data)}")
-        return base64_data
+        # 3.3 将本地截图文件读取为Base64
+        with open(local_path, 'rb') as f:
+            image_data = f.read()
+        base64_str = base64.b64encode(image_data).decode('utf-8')
 
-    except Exception as e:
-        print(f"[{udid}] 截图失败: {e}")
-        # 发生错误时也要尝试清理临时文件
-        try:
-            subprocess.run(['adb', '-s', udid, 'shell', 'rm', '-f', '/data/local/tmp/screen*.png'])
-        except:
-            pass
-        return None
+    finally:
+        # 4. 清理手机端的截图文件
+        subprocess.run(cmd_rm_phone, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        # 5. 清理本地的截图文件
+        if os.path.exists(local_path):
+            os.remove(local_path)
+
+    return base64_str
+
 
 def send_screenshot_to_api(base64_data, udid, api_url):
     """
@@ -692,7 +732,29 @@ def viode_release(udid,profile):
     Video_release_x = random.randint(480,560)
     Video_release_y = random.randint(2025,2068)
     tap_point(udid, Video_release_x, Video_release_y)
+    print(f"[{udid}] 点击加号按钮")
     time.sleep(3)
+
+    #检测弹框，如果弹框存在，则点击弹框
+    key_alert= "录制新视频"
+    base64_data = get_screenshot_base64(udid)
+    print(f"[{udid}] 开始检测弹框")
+    alert_x, alert_y = find_keyword_coordinates(base64_data, key_alert)
+    if alert_x and alert_y:
+        print(f"[{udid}] 检测到弹框，点击 '{key_alert}' 按钮")  
+        tap_point(udid, alert_x, alert_y)
+        time.sleep(2)
+    else:
+        print(f"[{udid}] 未找到弹框")
+
+    #点击帖子，选中帖子避免选择页面内容错误
+    print(f"[{udid}] 点击帖子，选中帖子避免选择页面内容错误")
+    key_post= "帖子"
+    base64_data = get_screenshot_base64(udid)
+    post_x, post_y = find_keyword_coordinates(base64_data, key_post)
+    tap_point(udid, post_x, post_y)
+    time.sleep(3)
+
     #选择默认第一条视频继续
     Confirmation_Video_x = random.randint(965,1010)
     Confirmation_Video_y = random.randint(195,220)

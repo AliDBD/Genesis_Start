@@ -1083,7 +1083,7 @@ def twitter_find_keyword_coordinates(image_path, keyword="关注"):
             x, y, w, h = data["left"][i], data["top"][i], data["width"][i], data["height"][i]
             center_x, center_y = x + w // 2, y + h // 2
             print(f"找到关键字 '{keyword}'，中心坐标: ({center_x}, {center_y})")
-            return (center_x, center_y)
+            return center_x, center_y
 
     print(f"未找到关键字 '{keyword}'")
     return None

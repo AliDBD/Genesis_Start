@@ -300,16 +300,16 @@ def perform_operations(udid):
             return
 
         # 第一个点击位置
-        x1, y1 = 686, 2187
+        x1, y1 = 683, 2046
         print(f"[{udid}] 准备点击第一个坐标: ({x1}, {y1})")
         tap_point(udid, x1, y1)
 
         # 等待页面响应和加载
-        time.sleep(5)  # 根据实际情况调整等待时间
+        time.sleep(3)  # 根据实际情况调整等待时间
 
         # 第二个点击位置
         coordinate_list = [
-            (966,507),
+            (900,507),
             (220,430),
             (250,530),
             (255,540),
@@ -320,12 +320,11 @@ def perform_operations(udid):
         x2, y2 = random.choice(coordinate_list)
         print(f"[{udid}] 准备点击第二个坐标: ({x2}, {y2})")
         tap_point(udid, x2, y2)
-
-        #随机滑动次数
-        slide = random.randint(25, 300)
-        print(f"随机次数为：{slide}")
-        # slide =5
         time.sleep(5)
+        #随机滑动次数
+        # slide = random.randint(25, 300)
+        # print(f"随机次数为：{slide}")
+        slide =5
         # 设置API地址
         api_url = "https://iris.iigood.com/iris/v1/agent/interest"
         for i in range(slide):
