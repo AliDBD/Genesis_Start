@@ -243,7 +243,7 @@ def human_swipe(udid, start_x, start_y, end_x, end_y, duration=300):
         distance_y = end_y - start_y
 
         # 生成3-5个中间点，使轨迹更自然
-        points_count = random.randint(3, 5)
+        points_count = 5
         points = [(start_x, start_y)]
 
         for i in range(points_count):
@@ -375,7 +375,7 @@ def convert_image_to_base64(image_path):
         return None
 
 
-"""搜索结果页面截图并处理图像Reels"""
+"""搜索结果页面截图并处理图像Shorts"""
 
 
 def capture_and_process_image(udid):
@@ -384,10 +384,10 @@ def capture_and_process_image(udid):
     return image
 
 
-"""从截图中识别 Reels 按钮的坐标"""
+"""从截图中识别 Shorts 按钮的坐标"""
 
 
-def find_reels_button(image):
+def find_shorts_button(image):
     try:
         # 转换为灰度图
         gray_image = cv2.cvtColor(np.array(image), cv2.COLOR_BGR2GRAY)
@@ -397,36 +397,36 @@ def find_reels_button(image):
 
         # 遍历识别到的文本
         for i, text in enumerate(ocr_data['text']):
-            if "Reels" in text:  # 匹配 Reels 文本
+            if "Shorts" in text:  # 匹配 Shorts 文本
                 x, y, w, h = ocr_data['left'][i], ocr_data['top'][i], ocr_data['width'][i], ocr_data['height'][i]
-                print(f"识别到 Reels 按钮位置: ({x}, {y}, {w}, {h})")
+                print(f"识别到 Shorts 按钮位置: ({x}, {y}, {w}, {h})")
                 # 返回按钮的中心点
                 return x + w // 2, y + h // 2
-        print("未找到 Reels 按钮")
+        print("未找到 Shorts 按钮")
         return None
     except Exception as e:
         print(f"OCR 识别失败: {e}")
         return None
 
 
-"""自动识别并点击 Reels 按钮"""
+"""自动识别并点击 Shorts 按钮"""
 
 
-def tap_reels_button(udid):
-    print(f"开始识别Reels按钮位置")
+def tap_shorts_button(udid):
+    print(f"开始识别Shorts按钮位置")
     # 获取截图
     image = capture_and_process_image(udid)
 
-    # 识别 Reels 按钮位置
-    button_position = find_reels_button(image)
+    # 识别 Shorts 按钮位置
+    button_position = find_shorts_button(image)
 
     if button_position:
-        # 点击 Reels 按钮
+        # 点击 Shorts 按钮
         x, y = button_position
-        print(f"[{udid}] 点击 Reels 按钮：({x}, {y})")
+        print(f"[{udid}] 点击 Shorts 按钮：({x}, {y})")
         tap_point(udid, x, y)
     else:
-        print(f"[{udid}] 未找到 Reels 按钮，无法点击")
+        print(f"[{udid}] 未找到 Shorts 按钮，无法点击")
 
 
 """将 Base64 数据解码为 OpenCV 图像"""
@@ -601,8 +601,8 @@ def open_youtube(udid):
         print(f"[{udid}] Youtube 启动流程完成")
 
         # 首页搜索按钮图标坐标
-        search_id_x = random.randint(845, 905)
-        search_id_y = random.randint(190, 220)
+        search_id_x = random.randint(850, 890)
+        search_id_y = random.randint(190, 200)
 
         # 确认搜索按钮坐标
         confirm_id_x = random.randint(930, 1010)
@@ -615,18 +615,11 @@ def open_youtube(udid):
         print(f"点击搜索按钮：（{search_id_x},{search_id_y}）")
         tap_point(udid, search_id_x, search_id_y)
         time.sleep(1)
-        input_text(udid, text="charming\ Girl")  # 输入搜索文本
+        input_text(udid, text="Girl")  # 输入搜索文本
         tap_point(udid, confirm_id_x, confirm_id_y)  # 确认搜索
         time.sleep(5)
-
-        # 切换视频板块Reels
-        # reels_id_x = random.randint(900, 988)
-        # reels_id_y = random.randint(310, 370)
-        # print(f"[{udid}]点击Reels按钮：（{reels_id_x},{reels_id_y}）")
-        # tap_point(udid, reels_id_x, reels_id_y)
-        # time.sleep(3)
-        # 切换视频板块Reels
-        tap_reels_button(udid)
+        #点击切换Shorts板块
+        tap_shorts_button(udid)
         time.sleep(3)
 
         print(f"[{udid}] 结果页面模拟滑动: 向上{up_swipes}次, 向下{down_swipes}次")
@@ -708,8 +701,8 @@ def open_youtube(udid):
                         print("图片中不包含“赞助内容”四个字")
                         time.sleep(3)
                         # 点击评论区
-                        comment_id_x = random.randint(983, 1027)
-                        comment_id_y = random.randint(1320, 1390)
+                        comment_id_x = random.randint(990, 1010)
+                        comment_id_y = random.randint(1187, 1270)
                         tap_point(udid, comment_id_x, comment_id_y)
                         print(f"[{udid}] 评论区已打开")
                         time.sleep(2)  # 内容加载

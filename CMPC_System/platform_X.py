@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 # -- coding: utf-8 --
+# @Time : 2024/12/27 10:00
+# @Author : Genesis Ai
+# @File : platform_X.py
+
 import subprocess
 import time
 import logging
@@ -27,13 +31,13 @@ sys.stdout.reconfigure(encoding='utf-8')
 # 日志配置
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(threadName)s] %(message)s")
 
-def input_text(udid, text):
+def twitter_input_text(udid, text):
     """使用直接的adb shell input text 命令输入文本，并模拟人工输入速度"""
     try:
         print(f"[{udid}] 输入文本: {text}")
         input_box_x = random.randint(330, 330)
         input_box_y = random.randint(189, 235)
-        tap_point(udid, input_box_x, input_box_y)
+        twitter_tap_point(udid, input_box_x, input_box_y)
         time.sleep(0.5)
         
         # 清除现有文本
@@ -65,7 +69,7 @@ def input_text(udid, text):
         print(f"[{udid}] 输入文本失败: {e}")
         return False
 
-def get_connected_devices():
+def twitter_get_connected_devices():
     """获取已连接的设备列表"""
     try:
         result = subprocess.run(
@@ -112,7 +116,7 @@ def get_connected_devices():
         print(f"获取设备列表时出错: {e}")
         return []
 
-def is_screen_on(udid):
+def twitter_is_screen_on(udid):
     """检查屏幕是否亮起"""
     try:
         result = subprocess.run(
@@ -128,27 +132,27 @@ def is_screen_on(udid):
         print(f"[{udid}] 检查屏幕状态时出错: {e}")
         return True
 
-def unlock_screen(udid):
+def twitter_unlock_screen(udid):
     """解锁设备屏幕（适用于无密码锁屏）"""
     print(f"[{udid}] 正在解锁屏幕")
     subprocess.run(['adb', '-s', udid, 'shell', 'input', 'swipe', '540', '2000', '540', '800'])
     time.sleep(2)
-    if is_screen_on(udid):
+    if twitter_is_screen_on(udid):
         print(f"[{udid}] 屏幕已解锁")
     else:
         print(f"[{udid}] 无法解锁屏幕")
 
-def ensure_screen_unlocked(udid):
+def twitter_ensure_screen_unlocked(udid):
     """确保屏幕被唤醒并解锁"""
-    if not is_screen_on(udid):
+    if not twitter_is_screen_on(udid):
         print(f"[{udid}] 屏幕关闭，正在唤醒")
         subprocess.run(['adb', '-s', udid, 'shell', 'input', 'keyevent', 'KEYCODE_WAKEUP'])
         time.sleep(1)
-    unlock_screen(udid)
+    twitter_unlock_screen(udid)
 
-def get_screen_size(udid):
+def twitter_get_screen_size(udid):
     """获取设备的屏幕分辨率"""
-    ensure_screen_unlocked(udid)
+    twitter_ensure_screen_unlocked(udid)
     result = subprocess.run(['adb', '-s', udid, 'shell', 'wm', 'size'], stdout=subprocess.PIPE, text=True)
     size_lines = result.stdout.strip().split('\n')
 
@@ -168,7 +172,7 @@ def get_screen_size(udid):
         print(f"[{udid}] 无法获取屏幕尺寸: {e}")
         return None, None
 
-def check_device_status(udid):
+def twitter_check_device_status(udid):
     """检查设备状态"""
     try:
         status = {
@@ -187,7 +191,7 @@ def check_device_status(udid):
 
         if status['connected']:
             # 检查屏幕状态
-            status['screen_on'] = is_screen_on(udid)
+            status['screen_on'] = twitter_is_screen_on(udid)
 
             # 检查电池电量
             battery_cmd = "dumpsys battery | grep level"
@@ -208,7 +212,7 @@ def check_device_status(udid):
         return None
 
 
-def base64_to_temp_image_file(base64_data, temp_path="temp_keyword_image.png"):
+def twitter_base64_to_temp_image_file(base64_data, temp_path="temp_keyword_image.png"):
     """
     将Base64数据解码并写入临时文件，返回临时图片文件路径
     """
@@ -225,17 +229,60 @@ def base64_to_temp_image_file(base64_data, temp_path="temp_keyword_image.png"):
         print(f"将 Base64 转为临时文件失败: {e}")
         return None
 
-#截图并转为base64返回
-def get_screenshot_base64(udid):
+def twitter_click_keyword(udid, image_path, keyword="关注"):
+    """
+    查找并点击页面上的关键字（基于文件路径）
+    """
+    coordinates = twitter_find_keyword_coordinates(image_path, keyword)
+    if coordinates:
+        center_x, center_y = coordinates
+        print(f"[{udid}] 点击关键字 '{keyword}' 的坐标: ({center_x}, {center_y})")
+        twitter_tap_point(udid, center_x, center_y)
+    else:
+        print(f"[{udid}] 未找到关键字 '{keyword}'，无法点击")
+
+"""从图片文件中查找指定关键字的位置，并返回其坐标"""
+def twitter_find_keyword_coordinates(image_path, keyword="关注"):
+    # 读取图像文件
+    img = cv2.imread(image_path)
+    if img is None:
+        print(f"无法读取图片文件: {image_path}")
+        return None
+
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    
+    # OCR 获取文字+坐标
+    data = pytesseract.image_to_data(gray, lang='chi_sim', output_type=pytesseract.Output.DICT)
+
+    # 遍历所有文字，寻找关键字
+    for i, text in enumerate(data["text"]):
+        if keyword in text:  # 如果找到关键字
+            x, y, w, h = data["left"][i], data["top"][i], data["width"][i], data["height"][i]
+            center_x, center_y = x + w // 2, y + h // 2
+            print(f"找到关键字 '{keyword}'，中心坐标: ({center_x}, {center_y})")
+            return (center_x, center_y)
+
+    print(f"未找到关键字 '{keyword}'")
+    return None
+
+
+def twitter_get_screenshot_base64(udid):
+    """
+    获取设备截图并转换为base64，不保存到本地
+    """
     try:
+        print(f"[{udid}] 开始执行截屏操作...")
+
         # 清理设备上可能存在的旧截图
         subprocess.run(['adb', '-s', udid, 'shell', 'rm', '-f', '/data/local/tmp/screen*.png'], check=True)
+        print(f"[{udid}] 已清理旧截图")
 
         # 生成带时间戳的文件名，确保唯一性
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_%f')
         device_filename = f"/data/local/tmp/screen_{timestamp}.png"
 
         # 截取新图片并直接读取为base64
+        print(f"[{udid}] 正在截取屏幕...")
         subprocess.run(['adb', '-s', udid, 'shell', 'screencap', '-p', device_filename], check=True)
         
         # 直接从设备读取文件内容并转换为base64
@@ -263,7 +310,7 @@ def get_screenshot_base64(udid):
             pass
         return None
 
-def send_screenshot_to_api(base64_data, udid, api_url):
+def twitter_send_screenshot_to_api(base64_data, udid, api_url):
     """
     发送base64图片数据到API
     """
@@ -287,7 +334,7 @@ def send_screenshot_to_api(base64_data, udid, api_url):
         print(f"[{udid}] API请求失败: {e}")
         return None
 
-def get_comments_ui(udid):
+def twitter_get_comments_ui(udid):
     """使用UIAutomator获取评论区的评论内容"""
     try:
         print(f"[{udid}] 开始获取评论内容...")
@@ -349,7 +396,7 @@ def get_comments_ui(udid):
             pass
         return []
 
-def send_comments_to_api(comments, udid, api_url):
+def twitter_send_comments_to_api(comments, udid, api_url):
     """
     发送前两条评论到API
     """
@@ -371,7 +418,7 @@ def send_comments_to_api(comments, udid, api_url):
         print(f"[{udid}] 发送评论失败: {e}")
     return None
 
-def human_swipe(udid, start_x, start_y, end_x, end_y, duration=300):
+def twitter_human_swipe(udid, start_x, start_y, end_x, end_y, duration=300):
     """
     模拟人类的滑动操作，生成一个弧线轨迹
     参数:
@@ -415,7 +462,7 @@ def human_swipe(udid, start_x, start_y, end_x, end_y, duration=300):
         print(f"[{udid}] 人工滑动模拟失败: {e}")
         return False
 
-def mock_api_response():
+def twitter_mock_api_response():
     """模拟API响应，随机返回True或False"""
     is_interested = random.choice([True, False])
     return {
@@ -424,7 +471,7 @@ def mock_api_response():
         'timestamp': datetime.now().isoformat()
     }
 
-def capture_screenshot_from_phone(udid, screenshot_path="/sdcard/screenshot.png", local_path="screenshot.png"):
+def twitter_capture_screenshot_from_phone(udid, screenshot_path="/sdcard/screenshot.png", local_path="screenshot.png"):
     """
     在手机上截图并拉取到本地
     :param udid: 设备的唯一识别码
@@ -469,7 +516,7 @@ def capture_screenshot_from_phone(udid, screenshot_path="/sdcard/screenshot.png"
         print(f"[{udid}] 截图失败: {e}")
         return None
 
-def convert_image_to_base64(image_path):
+def twitter_convert_image_to_base64(image_path):
     """
     将图片转换为 Base64 格式
     :param image_path: 图片文件的路径
@@ -484,7 +531,7 @@ def convert_image_to_base64(image_path):
         print(f"图片转换为 Base64 失败: {e}")
         return None
 
-def decode_base64_to_image(base64_data):
+def twitter_decode_base64_to_image(base64_data):
     """
     将 Base64 数据解码为 OpenCV 图像对象
     :param base64_data: Base64 编码的图片数据
@@ -503,11 +550,11 @@ def decode_base64_to_image(base64_data):
         return None
 
 
-def preprocess_image_from_base64(base64_data):
+def twitter_preprocess_image_from_base64(base64_data):
     """
     从 Base64 数据进行预处理：裁剪评论区、灰度化、放大、二值化
     """
-    img = decode_base64_to_image(base64_data)
+    img = twitter_decode_base64_to_image(base64_data)
     if img is None:
         print("无法从 Base64 数据解码图像")
         return None
@@ -537,12 +584,12 @@ def preprocess_image_from_base64(base64_data):
 
 
 
-def extract_comments_from_base64(base64_data):
+def twitter_extract_comments_from_base64(base64_data):
     """
     从 Base64 数据中提取评论信息
     """
     # 1. 图像预处理
-    processed_img = preprocess_image_from_base64(base64_data)
+    processed_img = twitter_preprocess_image_from_base64(base64_data)
     if processed_img is None:
         print("图像预处理失败")
         return []
@@ -553,12 +600,12 @@ def extract_comments_from_base64(base64_data):
     print(extracted_text)
 
     # 3. 清理文本内容
-    cleaned_text = clean_text(extracted_text)
+    cleaned_text = twitter_clean_text(extracted_text)
     print("清理后的文本内容：")
     print(cleaned_text)
 
     # 4. 解析评论
-    comments = parse_comments(cleaned_text)
+    comments = twitter_parse_comments(cleaned_text)
     if not comments:
         print(f"[未能获取到评论]，清理后的文本内容：")
         print(cleaned_text)
@@ -569,29 +616,58 @@ def extract_comments_from_base64(base64_data):
         print(f"{idx}. 用户名: {comment['username']}, 评论: {comment['comment']}")
     return comments
 
-def get_comments_from_screenshot(udid):
+def twitter_get_comments_from_screenshot(udid):
     """使用截图方式获取评论内容"""
     try:
         print(f"[{udid}] 开始通过截图获取评论内容...")
-
+        
         # 等待评论区加载
         time.sleep(2)
-
-        # 获取截图的Base64编码
-        base64_data = get_screenshot_base64(udid)
+        
+        # 确保目标目录存在
+        save_dir = r"E:\代码截图temp"
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+            print(f"[{udid}] 创建保存目录: {save_dir}")
+        
+        # 生成唯一的文件名
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        local_filename = f"comments_{udid}_{timestamp}.png"
+        local_path = os.path.join(save_dir, local_filename)
+        device_path = f"/sdcard/comments_{udid}.png"
+        
+        # 直接使用adb命令截图
+        print(f"[{udid}] 开始截取评论区...")
+        subprocess.run(['adb', '-s', udid, 'shell', 'screencap', '-p', device_path], check=True)
+        
+        # 将截图从设备拷贝到本地
+        print(f"[{udid}] 正在保存截图到本地: {local_path}")
+        subprocess.run(['adb', '-s', udid, 'pull', device_path, local_path], check=True)
+        
+        if not os.path.exists(local_path):
+            print(f"[{udid}] 截图保存失败")
+            return []
+            
+        print(f"[{udid}] 截图已成功保存到: {local_path}")
+        
+        # 将截图转换为Base64
+        base64_data = twitter_convert_image_to_base64(local_path)
         if not base64_data:
             print(f"[{udid}] 图片转换失败")
             return []
-
+            
         # 预处理图像并提取评论
-        processed_img = preprocess_image_from_base64(base64_data)
+        processed_img = twitter_preprocess_image_from_base64(base64_data)
         if processed_img is None:
             print(f"[{udid}] 图像预处理失败")
             return []
-
+            
         # 使用OCR提取评论
-        comments = extract_comments_from_base64(base64_data)
-
+        comments = twitter_extract_comments_from_base64(base64_data)
+        
+        # 清理设备上的临时文件
+        subprocess.run(['adb', '-s', udid, 'shell', f'rm {device_path}'])
+        
         if comments:
             print(f"[{udid}] 成功获取 {len(comments)} 条评论:")
             for i, comment in enumerate(comments, 1):
@@ -600,13 +676,13 @@ def get_comments_from_screenshot(udid):
         else:
             print(f"[{udid}] 未能获取到评论")
             return []
-
+            
     except Exception as e:
         print(f"[{udid}] 获取评论失败: {e}")
         return []
 
 """API接口返回人设搜索关键字内容"""
-def get_search_keyword(udid, profile):
+def twitter_get_search_keyword(udid, profile):
     """获取人设搜索关键字内容"""
     url = 'https://iris.iigood.com/iris/v1/agent/keywords'
     payload = {
@@ -635,12 +711,12 @@ def get_search_keyword(udid, profile):
         return None
     
 """发布文案生成"""
-def copywriting_release(udid,profile):
+def twitter_copywriting_release(udid,profile):
     """发布文案生成"""
     url = 'https://iris.iigood.com/iris/v1/agent/copywriting'
     payload = {
         "content": profile,
-        "platform":"instagram"
+        "platform":"twitter"
     }
     try:
         response = requests.post(url, json=payload)
@@ -657,7 +733,7 @@ def copywriting_release(udid,profile):
         return None
 
 #动态识别页面的文字信息点击对应坐标
-def tap_on_text(udid, target_texts):
+def twitter_tap_on_text(udid, target_texts):
     """根据页面上的文字点击相应的坐标"""
     try:
         # 截取当前屏幕
@@ -677,7 +753,7 @@ def tap_on_text(udid, target_texts):
                 x, y, w, h = data["left"][i], data["top"][i], data["width"][i], data["height"][i]
                 center_x, center_y = x + w // 2, y + h // 2
                 print(f"找到目标文字 '{text}'，点击坐标: ({center_x}, {center_y})")
-                tap_point(udid, center_x, center_y)
+                twitter_tap_point(udid, center_x, center_y)
                 return True
 
         print(f"未找到目标文字: {target_texts}")
@@ -687,76 +763,76 @@ def tap_on_text(udid, target_texts):
         print(f"点击目标文字失败: {e}")
         return False
 
-def viode_release(udid,profile):
+def twitter_viode_release(udid,profile):
     """首页发布视频点击加号"""
     Video_release_x = random.randint(480,560)
     Video_release_y = random.randint(2025,2068)
-    tap_point(udid, Video_release_x, Video_release_y)
+    twitter_tap_point(udid, Video_release_x, Video_release_y)
     time.sleep(3)
     #选择默认第一条视频继续
     Confirmation_Video_x = random.randint(965,1010)
     Confirmation_Video_y = random.randint(195,220)
-    tap_point(udid, Confirmation_Video_x, Confirmation_Video_y)
+    twitter_tap_point(udid, Confirmation_Video_x, Confirmation_Video_y)
     time.sleep(3)
     #点击继续下一步确认，进入到视频文案编辑页面
     Next_step_x = random.randint(838,975)
     Next_step_y = random.randint(2024,2102)
-    tap_point(udid, Next_step_x, Next_step_y)
+    twitter_tap_point(udid, Next_step_x, Next_step_y)
     time.sleep(3)
     #根据页面文案关键字识别输入框准确坐标
     target_texts = ["添加说明", "输入说明"]
-    tap_on_text(udid, target_texts)
+    twitter_tap_on_text(udid, target_texts)
     time.sleep(5)
     """发布视频的配文文案"""
-    copywriting = copywriting_release(udid,profile)
+    copywriting = twitter_copywriting_release(udid,profile)
     print(f"[{udid}] 发布视频的配文文案: {copywriting}")
-    input_text(udid, text=copywriting)
+    twitter_input_text(udid, text=copywriting)
     time.sleep(1)
     #关闭键盘
     # kill_keyboard_x = random.randint(800,850)
     # kill_keyboard_y = random.randint(2160,2195)
-    # tap_point(udid, kill_keyboard_x, kill_keyboard_y)
+    # twitter_tap_point(udid, kill_keyboard_x, kill_keyboard_y)
     # time.sleep(1)
     #点击确认按钮分享发布
     Next_step_x = random.randint(935,998)
     Next_step_y = random.randint(188,200)
-    tap_point(udid, Next_step_x, Next_step_y)
+    twitter_tap_point(udid, Next_step_x, Next_step_y)
     time.sleep(15)
 
 
-def open_instagram(udid):
-    """打开 Instagram 应用，进行Instagram的一系列操作"""
+def twitter_open_twitter(udid):
+    """打开 Twitter 应用，进行Twitter的一系列操作"""
     try:
-        print(f"[{udid}] 正在打开 Instagram...")
+        print(f"[{udid}] 正在打开 Twitter...")
         
-        # # 先强制停止 Instagram 应用
+        # # 先强制停止 Twitter 应用
         subprocess.run([
             'adb', '-s', udid, 'shell', 
-            'am', 'force-stop', 'com.instagram.android'
+            'am', 'force-stop', 'com.twitter.android'
         ])
         time.sleep(2)
         
-        # 启动 Instagram 主界面
+        # 启动 Twitter 主界面
         subprocess.run([
             'adb', '-s', udid, 'shell',
             'am', 'start', '-n',
-            'com.instagram.android/com.instagram.mainactivity.InstagramMainActivity'
+            'com.twitter.android/com.twitter.tweetdetail.TweetDetailActivity'
         ])
         time.sleep(4)  # 等待应用启动
-        print(f"[{udid}] Instagram 已启动")
+        print(f"[{udid}] Twitter 已启动")
         time.sleep(3)
         #场景描述
         copywriting_profile = "The feeling of reuniting with friends at a gathering after a long time apart."
         #调用视频发布
-        copywriting = viode_release(udid,copywriting_profile)
+        copywriting = twitter_viode_release(udid,copywriting_profile)
         print(f"[{udid}] 发布视频的配文文案: {copywriting}")
-        input_text(udid, text=copywriting)
+        twitter_input_text(udid, text=copywriting)
         time.sleep(1)
 
         #回到首页
         bank_home_x = random.randint(75, 125)
         bank_home_y = random.randint(2020, 2100)
-        tap_point(udid, bank_home_x, bank_home_y)
+        twitter_tap_point(udid, bank_home_x, bank_home_y)
         time.sleep(3)
         #首页搜索按钮图标坐标
         search_id_x = random.randint(295, 372)
@@ -765,34 +841,25 @@ def open_instagram(udid):
         #确认搜索按钮坐标
         confirm_id_x = random.randint(930,1010)
         confirm_id_y = random.randint(2020,2090)
-        
-        #Reels按钮坐标
-        reels_id_x = random.randint(980, 1027)
-        reels_id_y = random.randint(350, 360)
+
+        #关键词请求人设
+        keyword_profile = "I am a 30-year-old young father who enjoys gourmet food, beautiful cars, and outdoor adventures, and I often take care of my children at home on weekends."
+        #调用人设生成关键词方法，获取搜索关键词
+        twitter_get_search_keyword(udid,keyword_profile)
+        time.sleep(10)
 
          #针对搜索结果页面进行处理
         up_swipes = random.randint(1, 3)
         down_swipes = random.randint(1, 3)
 
-        #点击搜索按钮，弹出输入框
         print(f"点击搜索按钮：（{search_id_x},{search_id_y}）")
-        tap_point(udid, search_id_x, search_id_y)
+        twitter_tap_point(udid, search_id_x, search_id_y)
         time.sleep(1)
-         #关键词请求人设
-        keyword_profile = "I am a 30-year-old young father who enjoys gourmet food, beautiful cars, and outdoor adventures, and I often take care of my children at home on weekends."
-        #调用人设生成关键词方法，获取搜索关键词
-        get_search_keyword(udid,keyword_profile)
-        time.sleep(5)
-        #点击确认搜索按钮
-        tap_point(udid, confirm_id_x, confirm_id_y)
-        time.sleep(5)
-
          #切换视频板块Reels
-        key_reels= "Reels"
-        base64_data = get_screenshot_base64(udid)
-        reels_id_x, reels_id_y = find_keyword_coordinates(base64_data, key_reels)
+        reels_id_x = random.randint(980, 1027)
+        reels_id_y = random.randint(350, 360)
         print(f"[{udid}]点击Reels按钮：（{reels_id_x},{reels_id_y}）")
-        tap_point(udid, reels_id_x, reels_id_y)
+        twitter_tap_point(udid, reels_id_x, reels_id_y)
         time.sleep(3)
 
         print(f"[{udid}] 结果页面模拟滑动: 向上{up_swipes}次, 向下{down_swipes}次")
@@ -806,8 +873,8 @@ def open_instagram(udid):
             end_y = 800    # 上部区域
             
             # 使用人工滑动
-            human_swipe(udid, start_x, start_y, end_x, end_y, 
-                        #滑动区间随机，模拟人类真实行为
+            twitter_human_swipe(udid, start_x, start_y, end_x, end_y, 
+                        #滑动时间随机，模拟人类真实行为
                         duration=random.randint(250, 350))
             time.sleep(random.uniform(1, 3))
 
@@ -819,7 +886,7 @@ def open_instagram(udid):
             end_y = 1800    # 下部区域
             
             # 使用人工滑动
-            human_swipe(udid, start_x, start_y, end_x, end_y, 
+            twitter_human_swipe(udid, start_x, start_y, end_x, end_y, 
                         duration=random.randint(250, 350))
             time.sleep(random.uniform(0.5, 2))
 
@@ -828,10 +895,10 @@ def open_instagram(udid):
 
         # 在限定区域内随机选择一个点击位置
         random_click_x = random.randint(130, 950)
-        random_click_y = random.randint(650, 976)
+        random_click_y = random.randint(610, 1880)
         
         print(f"[{udid}] 在搜索结果页面随机点击位置: ({random_click_x}, {random_click_y})")
-        tap_point(udid, random_click_x, random_click_y)
+        twitter_tap_point(udid, random_click_x, random_click_y)
         time.sleep(2)  # 等待内容加载
         
         # 继续执行后续的视频滑动操作...
@@ -841,7 +908,7 @@ def open_instagram(udid):
         # 开始循环滑动视频
         for i in range(slide):
             #每次检查设备是否还连接，如果断开，则重新连接
-            if not check_device_status(udid):
+            if not twitter_check_device_status(udid):
                 try:
                     print(f"[{udid}] 设备断开，重新连接")
                     subprocess.run(['adb', '-s', udid, 'connect'])
@@ -852,14 +919,14 @@ def open_instagram(udid):
             
             print(f"进行第{i+1}次滑动")
             try:
-                #获取截图转换为Base64(等朱江伟接口开放，目前走mock逻辑)
-                # base64_data = get_screenshot_base64(udid)
-                # if not base64_data:
-                #     print(f"[{udid}] 获取截图失败")
-                #     continue
+                #获取截图转换为Base64
+                base64_data = twitter_get_screenshot_base64(udid)
+                if not base64_data:
+                    print(f"[{udid}] 获取截图失败")
+                    continue
 
                 # 获取API响应
-                api_response = mock_api_response()
+                api_response = twitter_mock_api_response()
                 print(f"[{udid}] 模拟 API 响应: {api_response}")
 
                 # 设定基础等待时间
@@ -873,13 +940,13 @@ def open_instagram(udid):
                     # 点击评论区
                     comment_id_x = random.randint(950, 1015)
                     comment_id_y = random.randint(1365, 1450)
-                    tap_point(udid, comment_id_x, comment_id_y)
+                    twitter_tap_point(udid, comment_id_x, comment_id_y)
                     print(f"[{udid}] 评论区已打开")
                     time.sleep(2)  # 内容加载
 
                     # 评论区滑动
-                    up_swipes = random.randint(1,3)
-                    down_swipes = random.randint(1,3)
+                    up_swipes = random.randint(2,5)
+                    down_swipes = random.randint(1,5)
                     print(f"[{udid}] 上下滑动次数: {up_swipes}次, {down_swipes}次")
                     
                     # 在评论区滑动
@@ -891,7 +958,7 @@ def open_instagram(udid):
                         end_y = 1000    # 上部区域
                         
                         # 使用人工滑动
-                        human_swipe(udid, start_x, start_y, end_x, end_y, 
+                        twitter_human_swipe(udid, start_x, start_y, end_x, end_y, 
                                     duration=random.randint(250, 350))
                         time.sleep(random.uniform(0.5, 2))
 
@@ -903,19 +970,19 @@ def open_instagram(udid):
                         end_y = 1800    # 下部区域
                         
                         # 使用人工滑动
-                        human_swipe(udid, start_x, start_y, end_x, end_y, 
+                        twitter_human_swipe(udid, start_x, start_y, end_x, end_y, 
                                     duration=random.randint(250, 350))
                         time.sleep(random.uniform(0.5, 2))
 
                     # 获取评论信息
-                    comments = get_comments_from_screenshot(udid)
+                    comments = twitter_get_comments_from_screenshot(udid)
                     if comments:
                         print(f"[{udid}] 获取到{len(comments)}条评论")
                         for idx, comment in enumerate(comments, 1):
                             print(f"{idx}.{comment}")
                         # 发送评论到API
                         comments_api_url = "https://iris.iigood.com/iris/v1/agent/comment"
-                        comments_response = send_comments_to_api(comments, udid, comments_api_url)
+                        comments_response = twitter_send_comments_to_api(comments, udid, comments_api_url)
                         if comments_response:
                             print(f"[{udid}] 评论API返回: {comments_response}")
 
@@ -923,16 +990,16 @@ def open_instagram(udid):
                     print(f"[{udid}] 关闭评论区")
                     comment_id_x = random.randint(340, 650)
                     comment_id_y = random.randint(370, 540)
-                    tap_point(udid, comment_id_x, comment_id_y)
+                    twitter_tap_point(udid, comment_id_x, comment_id_y)
                     time.sleep(1)
                     #双击屏幕点赞
                     randomclick_number = random.randint(1, 9)
                     print(f"[{udid}] 随机生成的数是: {randomclick_number}")
                     if randomclick_number % 2 == 0:
                         print(f"[{udid}] 随机数为偶数，执行双击点赞操作")
-                        tap_point(udid, 500, 1500)
+                        twitter_tap_point(udid, 500, 1500)
                         time.sleep(0.1)
-                        tap_point(udid, 500, 1500)
+                        twitter_tap_point(udid, 500, 1500)
                     else:
                         print(f"[{udid}] 随机数为奇数，跳过双击点赞操作")
                     #随机选择是否点关注
@@ -940,12 +1007,7 @@ def open_instagram(udid):
                     print(f"[{udid}] 随机生成的数是: {random_number}")
                     if random_number % 2 == 0:
                         print(f"[{udid}] 随机数为偶数，执行点击关注操作")
-                        key_follow= "关注"
-                        #获取截图转换为Base64
-                        print(f"[{udid}] 开始执行截屏操作...")  
-                        click_keyword_base64_data = get_screenshot_base64(udid)
-                        click_x, click_y = find_keyword_coordinates(click_keyword_base64_data, key_follow)
-                        tap_point(udid, click_x, click_y)
+                        twitter_click_keyword(udid, base64_data, "关注")
                     else:
                         print(f"[{udid}] 随机数为奇数，跳过关注操作")
 
@@ -957,7 +1019,7 @@ def open_instagram(udid):
                 else:
                     print(f"[{udid}] isInterested为False,等待{base_wait_time}秒")
                     time.sleep(base_wait_time)
-                    swipe_to_next_video(udid)
+                    twitter_swipe_to_next_video(udid)
                 
                 # 如果不是最后一次循环，执行滑动
                     if i < slide - 1:
@@ -967,7 +1029,7 @@ def open_instagram(udid):
                         start_next_y = 1650
                         end_next_y = 540
                         
-                        human_swipe(udid, start_next_x, start_next_y, end_next_x, end_next_y, 
+                        twitter_human_swipe(udid, start_next_x, start_next_y, end_next_x, end_next_y, 
                                     duration=random.randint(250, 350))
                         time.sleep(random.uniform(0.5, 2))
 
@@ -977,17 +1039,17 @@ def open_instagram(udid):
 
         print(f"[{udid}] 所有滑动操作完成")
         # 关闭应用
-        close_instagram(udid)
+        twitter_close_twitter(udid)
         return True
         
     except Exception as e:
-        print(f"[{udid}] Instagram 操作失败: {e}")
+        print(f"[{udid}] Twitter 操作失败: {e}")
         try:
-            close_instagram(udid)
+            twitter_close_twitter(udid)
         except Exception as close_error:
             print(f"[{udid}] 关闭应用失败: {close_error}")
         return False
-def swipe_to_next_video(udid):
+def twitter_swipe_to_next_video(udid):
     print(f"[{udid}] 开始滑动到下一个视频...")
     # 打印滑动开始时间
     print(f"[{udid}] 滑动时间: {time.strftime('%Y-%m-%d %H:%M:%S')}")
@@ -997,13 +1059,13 @@ def swipe_to_next_video(udid):
     end_x = 500
     end_y = 500
 
-    human_swipe(udid, start_x, start_y, end_x, end_y, duration=500)
+    twitter_human_swipe(udid, start_x, start_y, end_x, end_y, duration=500)
     time.sleep(2)
 
     print(f"[{udid}] 滑动完成")
 
-"""接收关键字并返回坐标"""
-def find_keyword_coordinates(image_path, keyword):
+"""从图片文件中查找指定关键字的位置，并返回其坐标"""
+def twitter_find_keyword_coordinates(image_path, keyword="关注"):
     # 读取图像文件
     img = cv2.imread(image_path)
     if img is None:
@@ -1026,7 +1088,18 @@ def find_keyword_coordinates(image_path, keyword):
     print(f"未找到关键字 '{keyword}'")
     return None
 
-def back_to_home(udid):
+"""查找并点击页面上的关键字（基于文件路径）"""
+def twitter_click_keyword(udid, image_path, keyword="关注"):
+    coordinates = twitter_find_keyword_coordinates(image_path, keyword)
+    if coordinates:
+        center_x, center_y = coordinates
+        print(f"[{udid}] 点击关键字 '{keyword}' 的坐标: ({center_x}, {center_y})")
+        twitter_tap_point(udid, center_x, center_y)
+    else:
+        print(f"[{udid}] 未找到关键字 '{keyword}'，无法点击")
+
+
+def twitter_back_to_home(udid):
     """返回手机桌面"""
     try:
         print(f"[{udid}] 正在返回桌面...")
@@ -1038,7 +1111,7 @@ def back_to_home(udid):
         print(f"[{udid}] 返回桌面失败: {e}")
         return False
 
-def tap_point(udid, x, y):
+def twitter_tap_point(udid, x, y):
     """点击指定坐标"""
     try:
         subprocess.run(['adb', '-s', udid, 'shell', 'input', 'tap', str(x), str(y)])
@@ -1048,33 +1121,33 @@ def tap_point(udid, x, y):
         print(f"[{udid}] 点击失败: {e}")
         return False
 
-def close_instagram(udid):
-    """关闭 Instagram 应用并返回桌面"""
+def twitter_close_twitter(udid):
+    """关闭 Twitter 应用并返回桌面"""
     try:
-        print(f"[{udid}] 正在关闭 Instagram...")
-        # 强制停止 Instagram 应用
+        print(f"[{udid}] 正在关闭 Twitter...")
+        # 强制停止 Twitter 应用
         subprocess.run([
             'adb', '-s', udid, 'shell', 
-            'am', 'force-stop', 'com.instagram.android'
+            'am', 'force-stop', 'com.twitter.android'
         ], check=True)
         time.sleep(1)
         
         # 返回桌面
-        back_to_home(udid)
-        print(f"[{udid}] Instagram 已关闭并返回桌面")
+        twitter_back_to_home(udid)
+        print(f"[{udid}] Twitter 已关闭并返回桌面")
         return True
     except Exception as e:
-        print(f"[{udid}] 关闭 Instagram 失败: {e}")
+        print(f"[{udid}] 关闭 Twitter 失败: {e}")
         return False
 
-def process_device(udid):
+def twitter_process_device(udid):
     """处理单个设备的所有操作流程"""
     import pytesseract
     # 显式设置路径
     pytesseract.pytesseract.tesseract_cmd = r"D:\Software\Tesseract-OCR\tesseract.exe"
     try:
         print(f"\n开始处理设备 {udid}")
-        status = check_device_status(udid)
+        status = twitter_check_device_status(udid)
         if status:
             print(f"设备 {udid} 状态:")
             print(f"- 连接状态: {'已连接' if status['connected'] else '未连接'}")
@@ -1083,19 +1156,19 @@ def process_device(udid):
             print(f"- WiFi状态: {'已连接' if status['wifi_connected'] else '未连接'}")
             
             if not status['screen_on']:
-                ensure_screen_unlocked(udid)
+                twitter_ensure_screen_unlocked(udid)
             
             # 先返回桌面
-            back_to_home(udid)
+            twitter_back_to_home(udid)
             time.sleep(1)
             
-            # 打开 Instagram 并执行操作
-            open_instagram(udid)
+            # 打开 Twitter 并执行操作
+            twitter_open_twitter(udid)
     except Exception as e:
         print(f"[{udid}] 设备处理过程出错: {e}")
 
 # 验证是否成功切换到 Reels（可选）
-def check_reels_tab(udid):
+def twitter_check_reels_tab(udid):
     try:
         # 使用 UI Automator 检查当前页面
         subprocess.run(['adb', '-s', udid, 'shell', 'uiautomator', 'dump', '/data/local/tmp/ui.xml'])
@@ -1105,7 +1178,7 @@ def check_reels_tab(udid):
     except:
         return False
 
-def parse_comments(text):
+def twitter_parse_comments(text):
     """
     解析 OCR 提取的文本内容，识别用户名和评论
     """
@@ -1129,7 +1202,7 @@ def parse_comments(text):
     return comments
 
 
-def clean_text(text):
+def twitter_clean_text(text):
     """
     清理 OCR 提取的文本内容
     """
@@ -1144,7 +1217,7 @@ if __name__ == "__main__":
     import pytesseract
     pytesseract.pytesseract.tesseract_cmd = r"D:\Software\Tesseract-OCR\tesseract.exe"
     # 获取所有连接的设备
-    devices = get_connected_devices()
+    devices = twitter_get_connected_devices()
     if not devices:
         print("没有检测到连接的设备")
     else:
@@ -1156,7 +1229,7 @@ if __name__ == "__main__":
         # 为每个设备创建并启动一个单独线程
         for udid in devices:
             thread = threading.Thread(
-                target=process_device,
+                target=twitter_process_device,
                 args=(udid,),
                 name=f"Device-{udid}"
             )

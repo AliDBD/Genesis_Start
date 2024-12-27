@@ -31,19 +31,24 @@ sys.stderr.reconfigure(encoding='utf-8')
 # 日志配置
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] [%(threadName)s] %(message)s")
 """使用直接的adb shell input text 命令输入文本"""
-def input_text(udid, text):
+def fb_input_text(udid, text):
     try:
+        if text is None:
+            raise ValueError("输入文本不能为空")
+        
         print(f"[{udid}] 输入文本: {text}")
         # 输入框的坐标
         input_box_x = random.randint(281, 700)
         input_box_y = random.randint(178, 227)
-        tap_point(udid, input_box_x, input_box_y)
+        fb_tap_point(udid, input_box_x, input_box_y)
         time.sleep(0.5)
         # 清除现有文本
         subprocess.run(['adb', '-s', udid, 'shell', 'input', 'keyevent', 'KEYCODE_CLEAR'])
         time.sleep(1)
+        # 处理特殊字符
+        safe_text = text.replace(" ", "%s")
         # 直接使用完整的命令字符串
-        cmd = f'adb -s {udid} shell input text "{text}"'
+        cmd = f'adb -s {udid} shell input text "{safe_text}"'
         subprocess.run(cmd, shell=True)
 
         print(f"[{udid}] 文本输入完成")
@@ -53,7 +58,7 @@ def input_text(udid, text):
         return False
 
 """获取已连接的设备列表"""
-def get_connected_devices():
+def fb_get_connected_devices():
     try:
         result = subprocess.run(
             ['adb', 'devices'],
@@ -100,7 +105,7 @@ def get_connected_devices():
         return []
 
 """检查屏幕是否亮起"""
-def is_screen_on(udid):
+def fb_is_screen_on(udid):
     try:
         result = subprocess.run(
             ['adb', '-s', udid, 'shell', 'dumpsys', 'display | grep "mScreenState"'],
@@ -116,26 +121,26 @@ def is_screen_on(udid):
         return True
 
 """解锁设备屏幕（适用于无密码锁屏）"""
-def unlock_screen(udid):
+def fb_unlock_screen(udid):
     print(f"[{udid}] 正在解锁屏幕")
     subprocess.run(['adb', '-s', udid, 'shell', 'input', 'swipe', '540', '2000', '540', '800'])
     time.sleep(2)
-    if is_screen_on(udid):
+    if fb_is_screen_on(udid):
         print(f"[{udid}] 屏幕已解锁")
     else:
         print(f"[{udid}] 无法解锁屏幕")
 
 """确保屏幕被唤醒并解锁"""
-def ensure_screen_unlocked(udid):
-    if not is_screen_on(udid):
+def fb_ensure_screen_unlocked(udid):
+    if not fb_is_screen_on(udid):
         print(f"[{udid}] 屏幕关闭，正在唤醒")
         subprocess.run(['adb', '-s', udid, 'shell', 'input', 'keyevent', 'KEYCODE_WAKEUP'])
         time.sleep(1)
-    unlock_screen(udid)
+    fb_unlock_screen(udid)
 
 """获取设备的屏幕分辨率"""
-def get_screen_size(udid):
-    ensure_screen_unlocked(udid)
+def fb_get_screen_size(udid):
+    fb_ensure_screen_unlocked(udid)
     result = subprocess.run(['adb', '-s', udid, 'shell', 'wm', 'size'], stdout=subprocess.PIPE, text=True)
     size_lines = result.stdout.strip().split('\n')
 
@@ -156,7 +161,7 @@ def get_screen_size(udid):
         return None, None
 
 """检查设备状态"""
-def check_device_status(udid):
+def fb_check_device_status(udid):
     try:
         status = {
             'connected': False,
@@ -174,7 +179,7 @@ def check_device_status(udid):
 
         if status['connected']:
             # 检查屏幕状态
-            status['screen_on'] = is_screen_on(udid)
+            status['screen_on'] = fb_is_screen_on(udid)
 
             # 检查电池电量
             battery_cmd = "dumpsys battery | grep level"
@@ -214,7 +219,7 @@ def check_device_status(udid):
     - end_x, end_y: 结束坐标
     - duration: 滑动持续时间(毫秒)
 """
-def human_swipe(udid, start_x, start_y, end_x, end_y, duration=300):
+def fb_human_swipe(udid, start_x, start_y, end_x, end_y, duration=300):
     try:
         # 计算基础偏移量
         distance_x = end_x - start_x
@@ -274,7 +279,7 @@ def human_swipe(udid, start_x, start_y, end_x, end_y, duration=300):
         return False
 
 """模拟API响应，随机返回True或False"""
-def mock_api_response():
+def fb_mock_api_response():
     #is_interested = random.choice([True, False])
     is_interested = True
     return {
@@ -289,7 +294,7 @@ def mock_api_response():
     :param screenshot_path: 手机端保存截图的路径
     :param local_path: 本地保存截图的路径
     """
-def capture_screenshot_from_phone(udid, screenshot_path="/sdcard/screenshot.png", local_path="screenshot.png"):
+def fb_capture_screenshot_from_phone(udid, screenshot_path="/sdcard/screenshot.png", local_path="screenshot.png"):
     try:
         # 清理手机上的旧截图（如果存在）
         print(f"[{udid}] 清理截图...")
@@ -333,7 +338,7 @@ def capture_screenshot_from_phone(udid, screenshot_path="/sdcard/screenshot.png"
     :param image_path: 图片文件的路径
     :return: Base64 字符串
 """
-def convert_image_to_base64(image_path):
+def fb_convert_image_to_base64(image_path):
     try:
         with open(image_path, "rb") as image_file:
             base64_data = base64.b64encode(image_file.read()).decode('utf-8')
@@ -344,13 +349,13 @@ def convert_image_to_base64(image_path):
         return None
 
 """搜索结果页面截图并处理图像Reels"""
-def capture_and_process_image(udid):
-    screenshot_path = capture_screenshot_from_phone(udid)  # 保存截图到本地
+def fb_capture_and_process_image(udid):
+    screenshot_path = fb_capture_screenshot_from_phone(udid)  # 保存截图到本地
     image = Image.open(screenshot_path)
     return image
 
 """从截图中识别 Reels 按钮的坐标"""
-def find_reels_button(image):
+def fb_find_reels_button(image):
     try:
         # 转换为灰度图
         gray_image = cv2.cvtColor(np.array(image), cv2.COLOR_BGR2GRAY)
@@ -372,24 +377,24 @@ def find_reels_button(image):
         return None
     
 """自动识别并点击 Reels 按钮"""
-def tap_reels_button(udid):
+def fb_tap_reels_button(udid):
     print(f"开始识别Reels按钮位置")
     # 获取截图
-    image = capture_and_process_image(udid)
+    image = fb_capture_and_process_image(udid)
     
     # 识别 Reels 按钮位置
-    button_position = find_reels_button(image)
+    button_position = fb_find_reels_button(image)
     
     if button_position:
         # 点击 Reels 按钮
         x, y = button_position
         print(f"[{udid}] 点击 Reels 按钮：({x}, {y})")
-        tap_point(udid, x, y)
+        fb_tap_point(udid, x, y)
     else:
         print(f"[{udid}] 未找到 Reels 按钮，无法点击")    
 
 """将 Base64 数据解码为 OpenCV 图像"""
-def base64_to_image(base64_data):
+def fb_base64_to_image(base64_data):
     try:
         # 去掉前缀并解码 Base64 数据
         if "data:image" in base64_data:
@@ -406,20 +411,20 @@ def base64_to_image(base64_data):
         return None
 """滑动到下一个视频"""
 swipe_lock = threading.Lock()
-def swipe_to_next_video(udid):
+def fb_swipe_to_next_video(udid):
     start_x = 500
     start_y = 1500
     end_x = 500
     end_y = 500
     with swipe_lock:
         print(f"[{udid}]开始滑动到下一个视频******")
-        human_swipe(udid,start_x,start_y, end_x, end_y,duration=500)
+        fb_human_swipe(udid,start_x,start_y, end_x, end_y,duration=500)
         time.sleep(2)
 
 """从 Base64 数据预处理图片，包括裁剪评论区、灰度化、二值化"""
-def preprocess_image_from_base64(base64_data):
+def fb_preprocess_image_from_base64(base64_data):
     try:
-        img = base64_to_image(base64_data)
+        img = fb_base64_to_image(base64_data)
         if img is None:
             print("无法从 Base64 数据解码图片")
             return None
@@ -444,7 +449,7 @@ def preprocess_image_from_base64(base64_data):
         return None
 
 """在视频页面进行截图分析是否包含（关键字信息）"""
-def capture_screenshot_as_base64(udid):
+def fb_capture_screenshot_as_base64(udid):
     """
     截图设备当前屏幕并返回 Base64 编码数据。
     :param udid: 设备的唯一标识符。
@@ -479,7 +484,7 @@ def capture_screenshot_as_base64(udid):
 :param target_text: 要匹配的目标文字
 :return: 如果包含目标文字，返回 True；否则返回 False
 """
-def contains_text(base64_image: str, target_text: str) -> bool:
+def fb_contains_text(base64_image: str, target_text: str) -> bool:
     try:
         # 解码 Base64 图片为二进制数据
         image_data = base64.b64decode(base64_image)
@@ -503,7 +508,7 @@ def contains_text(base64_image: str, target_text: str) -> bool:
 
 
 """打开 Facebook 应用，进行Facebook的一系列操作"""
-def open_facebook(udid):
+def fb_open_facebook(udid):
     try:
         print(f"[{udid}] 正在打开 Facebook...")
 
@@ -555,20 +560,20 @@ def open_facebook(udid):
         down_swipes = random.randint(1, 3)
 
         print(f"点击搜索按钮：（{search_id_x},{search_id_y}）")
-        tap_point(udid, search_id_x, search_id_y)
+        fb_tap_point(udid, search_id_x, search_id_y)
         time.sleep(1)
-        input_text(udid, text="charming\ Girl")  # 输入搜索文本
-        tap_point(udid, confirm_id_x, confirm_id_y)#确认搜索
+        fb_input_text(udid, text="charming\ Girl")  # 输入搜索文本
+        fb_tap_point(udid, confirm_id_x, confirm_id_y)#确认搜索
         time.sleep(5)
 
         # 切换视频板块Reels
         # reels_id_x = random.randint(900, 988)
         # reels_id_y = random.randint(310, 370)
         # print(f"[{udid}]点击Reels按钮：（{reels_id_x},{reels_id_y}）")
-        # tap_point(udid, reels_id_x, reels_id_y)
+        # fb_tap_point(udid, reels_id_x, reels_id_y)
         # time.sleep(3)
         #切换视频板块Reels
-        tap_reels_button(udid)
+        fb_tap_reels_button(udid)
         time.sleep(3)
 
         print(f"[{udid}] 结果页面模拟滑动: 向上{up_swipes}次, 向下{down_swipes}次")
@@ -582,7 +587,7 @@ def open_facebook(udid):
             end_y = 800  # 上部区域
 
             # 使用人工滑动
-            human_swipe(udid, start_x, start_y, end_x, end_y,
+            fb_human_swipe(udid, start_x, start_y, end_x, end_y,
                         # 滑动时间随机，模拟人类真实行为
                         duration=random.randint(250, 350))
             time.sleep(random.uniform(1, 3))
@@ -595,7 +600,7 @@ def open_facebook(udid):
             end_y = 1800  # 下部区域
 
             # 使用人工滑动
-            human_swipe(udid, start_x, start_y, end_x, end_y,
+            fb_human_swipe(udid, start_x, start_y, end_x, end_y,
                         duration=random.randint(250, 350))
             time.sleep(random.uniform(0.5, 2))
 
@@ -607,7 +612,7 @@ def open_facebook(udid):
         random_click_y = random.randint(610, 1880)
 
         print(f"[{udid}] 在搜索结果页面随机点击位置: ({random_click_x}, {random_click_y})")
-        tap_point(udid, random_click_x, random_click_y)
+        fb_tap_point(udid, random_click_x, random_click_y)
         time.sleep(2)  # 等待内容加载
         # 继续执行后续的视频滑动操作...
         slide = 2
@@ -616,7 +621,7 @@ def open_facebook(udid):
         # 开始循环滑动视频
         for i in range(slide):
             # 每次检查设备是否还连接，如果断开，则重新连接
-            if not check_device_status(udid):
+            if not fb_check_device_status(udid):
                 try:
                     print(f"[{udid}] 设备断开，重新连接")
                     subprocess.run(['adb', '-s', udid, 'connect'])
@@ -626,10 +631,10 @@ def open_facebook(udid):
                     return
 
             print(f"进行第{i + 1}次滑动")
-            swipe_to_next_video(udid)
+            fb_swipe_to_next_video(udid)
             try:
                 # 获取API响应
-                api_response = mock_api_response()
+                api_response = fb_mock_api_response()
                 print(f"[{udid}] 模拟 API 响应: {api_response}")
 
                 # 设定基础等待时间
@@ -642,8 +647,8 @@ def open_facebook(udid):
 
 
                     # 判断是否包含“赞助内容”
-                    base64_data_images = capture_screenshot_as_base64(udid)
-                    if contains_text(base64_data_images, "赞助内容"):
+                    base64_data_images = fb_capture_screenshot_as_base64(udid)
+                    if fb_contains_text(base64_data_images, "赞助内容"):
                         print("图片中包含“赞助内容”四个字")
                         return True
                     else:
@@ -653,7 +658,7 @@ def open_facebook(udid):
                         # 点击评论区
                         comment_id_x = random.randint(983, 1027)
                         comment_id_y = random.randint(1320, 1390)
-                        tap_point(udid, comment_id_x, comment_id_y)
+                        fb_tap_point(udid, comment_id_x, comment_id_y)
                         print(f"[{udid}] 评论区已打开")
                         time.sleep(2)  # 内容加载
 
@@ -665,21 +670,21 @@ def open_facebook(udid):
                         print(f"[{udid}] 评论区截图已保存到本地：{local_path}")
 
                         # 将截图转换为Base64
-                        base64_data = convert_image_to_base64(local_path)
+                        base64_data = fb_convert_image_to_base64(local_path)
                         print(f"[{udid}] 评论区截图已转换为Base64")
-                        image = decode_base64_to_image(base64_data)
+                        image = fb_decode_base64_to_image(base64_data)
                         if image is None:
                             print("图片解码失败，程序终止。")
                             return
 
                         # 预处理图像
-                        processed_image = preprocess_image(image)
+                        processed_image = fb_preprocess_image(image)
 
                         # OCR 提取文本
-                        extracted_text = extract_text_from_image(processed_image)
+                        extracted_text = fb_extract_text_from_image(processed_image)
 
                         # 解析评论
-                        comments = parse_comments(extracted_text)
+                        comments = fb_parse_comments(extracted_text)
 
                         # 打印评论
                         print("提取的评论内容：")
@@ -693,14 +698,14 @@ def open_facebook(udid):
 
                         # 关闭评论区
                         print(f"[{udid}] 关闭评论区")
-                        press_back(udid)#返回
+                        fb_press_back(udid)#返回
                         time.sleep(1)
                         # 双击屏幕点赞
                         randomclick_number = random.randint(1, 9)
                         print(f"[{udid}] 随机生成的数是: {randomclick_number}")
                         if randomclick_number % 2 == 0:
                             print(f"[{udid}] 随机数为偶数，执行双击点赞操作")
-                            double_tap_like(udid)
+                            fb_double_tap_like(udid)
                         else:
                             print(f"[{udid}] 随机数为奇数，跳过双击点赞操作")
                         # 随机选择是否点关注
@@ -718,7 +723,7 @@ def open_facebook(udid):
                 else:
                     print(f"[{udid}] isInterested为False,等待{base_wait_time}秒")
                     time.sleep(base_wait_time)
-                    swipe_to_next_video(udid)
+                    fb_swipe_to_next_video(udid)
 
                     # 如果不是最后一次循环，执行滑动
                     if i < slide - 1:
@@ -728,7 +733,7 @@ def open_facebook(udid):
                         start_next_y = 1650
                         end_next_y = 540
 
-                        human_swipe(udid, start_next_x, start_next_y, end_next_x, end_next_y,
+                        fb_human_swipe(udid, start_next_x, start_next_y, end_next_x, end_next_y,
                                     duration=random.randint(250, 350))
                         time.sleep(random.uniform(0.5, 2))
 
@@ -738,19 +743,19 @@ def open_facebook(udid):
 
         print(f"[{udid}] 所有滑动操作完成")
         # 关闭应用
-        close_facebook(udid)
+        fb_close_facebook(udid)
         return True
 
     except Exception as e:
         print(f"[{udid}] Facebook 操作失败: {e}")
         try:
-            close_facebook(udid)
+            fb_close_facebook(udid)
         except Exception as close_error:
             print(f"[{udid}] 关闭应用失败: {close_error}")
         return False
 
 """模拟返回按键操作"""
-def press_back(udid):
+def fb_press_back(udid):
     try:
         subprocess.run(['adb', '-s', udid, 'shell', 'input', 'keyevent', 'KEYCODE_BACK'], check=True)
         print(f"[{udid}] 模拟返回按键成功")
@@ -760,7 +765,7 @@ def press_back(udid):
         return False
 
 """返回手机桌面"""
-def back_to_home(udid):
+def fb_back_to_home(udid):
     try:
         print(f"[{udid}] 正在返回桌面...")
         subprocess.run(['adb', '-s', udid, 'shell', 'input', 'keyevent', 'KEYCODE_HOME'])
@@ -772,7 +777,7 @@ def back_to_home(udid):
         return False
 
 """点击指定坐标"""
-def tap_point(udid, x, y):
+def fb_tap_point(udid, x, y):
     try:
         subprocess.run(['adb', '-s', udid, 'shell', 'input', 'tap', str(x), str(y)])
         time.sleep(0.5)  # 等待点击响应
@@ -782,7 +787,7 @@ def tap_point(udid, x, y):
         return False
 
 """关闭 Facebook 应用并返回桌面"""
-def close_facebook(udid):
+def fb_close_facebook(udid):
     try:
         print(f"[{udid}] 正在关闭 Facebook...")
         # 强制停止 Facebook 应用
@@ -793,7 +798,7 @@ def close_facebook(udid):
         time.sleep(1)
 
         # 返回桌面
-        back_to_home(udid)
+        fb_back_to_home(udid)
         print(f"[{udid}] Facebook 已关闭并返回桌面")
         return True
     except Exception as e:
@@ -801,13 +806,13 @@ def close_facebook(udid):
         return False
 
 """处理单个设备的所有操作流程"""
-def process_device(udid):
+def fb_process_device(udid):
     import pytesseract
     # 显式设置路径
     pytesseract.pytesseract.tesseract_cmd = r"D:\Software\Tesseract-OCR\tesseract.exe"
     try:
         print(f"\n开始处理设备 {udid}")
-        status = check_device_status(udid)
+        status = fb_check_device_status(udid)
         if status:
             print(f"设备 {udid} 状态:")
             print(f"- 连接状态: {'已连接' if status['connected'] else '未连接'}")
@@ -816,19 +821,19 @@ def process_device(udid):
             print(f"- WiFi状态: {'已连接' if status['wifi_connected'] else '未连接'}")
 
             if not status['screen_on']:
-                ensure_screen_unlocked(udid)
+                fb_ensure_screen_unlocked(udid)
 
             # 先返回桌面
-            back_to_home(udid)
+            fb_back_to_home(udid)
             time.sleep(1)
 
             # 打开 Facebook 并执行操作
-            open_facebook(udid)
+            fb_open_facebook(udid)
     except Exception as e:
         print(f"[{udid}] 设备处理过程出错: {e}")
 
 """将 Base64 解码为图片"""
-def decode_base64_to_image(base64_string):
+def fb_decode_base64_to_image(base64_string):
     try:
         image_data = base64.b64decode(base64_string)
         image = Image.open(io.BytesIO(image_data))
@@ -838,7 +843,7 @@ def decode_base64_to_image(base64_string):
         return None
 
 """图像预处理（可选，增强 OCR 识别准确度）"""
-def preprocess_image(image):
+def fb_preprocess_image(image):
     try:
         # 裁剪评论区域（根据截图调整坐标）
         cropped_image = image.crop((0, 400, image.width, image.height - 100))  # 调整为实际评论区
@@ -862,7 +867,7 @@ def preprocess_image(image):
 
 
 """提取评论内容"""
-def extract_text_from_image(image):
+def fb_extract_text_from_image(image):
     try:
         text = pytesseract.image_to_string(image, lang="eng+chi_sim+jpn")
         print("OCR 提取的原始文本内容：")
@@ -874,7 +879,7 @@ def extract_text_from_image(image):
 
 
 """解析评论信息"""
-def parse_comments(text):
+def fb_parse_comments(text):
     lines = text.split("\n")
     comments = []
     current_user = None
@@ -903,7 +908,7 @@ def parse_comments(text):
     return comments
 
 """在视频中心区域随机选择一个点进行双击"""
-def double_tap_like(udid):
+def fb_double_tap_like(udid):
     try:
         center_x = random.randint(300, 800)  # 视频中心区域X轴范围
         center_y = random.randint(800, 1200)  # 视频中心区域Y轴范围
@@ -911,9 +916,9 @@ def double_tap_like(udid):
         print(f"[{udid}] 执行双击点赞操作，位置：({center_x}, {center_y})")
 
         # 执行双击，两次点击间隔要短
-        tap_point(udid, center_x, center_y)
+        fb_tap_point(udid, center_x, center_y)
         time.sleep(0.05)  # 减少两次点击之间的间隔
-        tap_point(udid, center_x, center_y)
+        fb_tap_point(udid, center_x, center_y)
 
         print(f"[{udid}] 双击点赞完成")
         return True
@@ -926,7 +931,7 @@ if __name__ == "__main__":
 
     pytesseract.pytesseract.tesseract_cmd = r"D:\Software\Tesseract-OCR\tesseract.exe"
     # 获取所有连接的设备
-    devices = get_connected_devices()
+    devices = fb_get_connected_devices()
     if not devices:
         print("没有检测到连接的设备")
     else:
@@ -938,7 +943,7 @@ if __name__ == "__main__":
         # 为每个设备创建并启动一个单独线程
         for udid in devices:
             thread = threading.Thread(
-                target=process_device,
+                target=fb_process_device,
                 args=(udid,),
                 name=f"Device-{udid}"
             )

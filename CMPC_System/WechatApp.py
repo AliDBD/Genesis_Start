@@ -9,6 +9,7 @@
 **可以打开抖音，获取坐标
 **可以发送图片到API
 **可以发送评论到API 
+**可操作机型SAMSUNG S10E
 '''
 
 import subprocess
@@ -394,22 +395,22 @@ def perform_operations(udid):
 
         # 执行微信的其他操作...
         # 第一个点击位置
-        x1, y1 = 686, 2187
+        x1, y1 = 683, 2046
         print(f"[{udid}] 准备点击第一个坐标发现位置: ({x1}, {y1})")
         tap_point(udid, x1, y1)
         # 等待页面响应和加载
         time.sleep(2)  # 根据实际情况调整等待时间
 
         # 第二个点击位置
-        coordinate_list_x = random.randint(220,960)
-        coordinate_list_y = random.randint(430,540)
+        coordinate_list_x = random.randint(220,900)
+        coordinate_list_y = random.randint(430,520)
 
         # 视频号搜索按钮坐标
-        coordinateone_list_x = random.randint(880,901)
-        coordinateone_list_y = random.randint(160,191)
+        coordinateone_list_x = random.randint(850,890)
+        coordinateone_list_y = random.randint(180,195)
         #确认搜索关键位置坐标
-        search_list_x = random.randint(950,961)
-        search_list_y = random.randint(183,195)
+        search_list_x = random.randint(920,980)
+        search_list_y = random.randint(170,195)
         #搜索结果视频点击区域结果x值为125-950，y值为1425-1910
         video_list_x = random.randint(125,950)
         video_list_y = random.randint(1425,1910)
@@ -432,11 +433,9 @@ def perform_operations(udid):
 
         # 点击搜索框确保获得焦点
         tap_point(udid, 500, 190)
-        time.sleep(2)  # 增加等待时间，确保焦点已获得
+        time.sleep(1)  # 增加等待时间，确保焦点已获得
 
         # 输入关键字搜索
-        tap_point(udid, 500, 190)
-        time.sleep(1)
         input_text(udid, "Beauty")
         time.sleep(1)
         print(f"[{udid}] 点击视频号搜索按钮坐标: ({search_list_x}, {search_list_y})")
@@ -478,8 +477,8 @@ def perform_operations(udid):
                         tap_point(udid, give_up_x, give_up_y)
                         time.sleep(1)  # 等待点赞加载
                         # 点击评论按钮
-                        comment_list = [(970, 2085), (1000, 2085), (1030, 2085), (1060, 2085), (1090, 2085)]
-                        comment_x, comment_y = random.choice(comment_list)
+                        comment_x = random.randint(950,1000)
+                        comment_y = random.randint(1960,2000)
                         print(f"[{udid}] 准备点击评论坐标: ({comment_x}, {comment_y})")
                         tap_point(udid, comment_x, comment_y)
 
@@ -500,8 +499,8 @@ def perform_operations(udid):
                                 print(f"[{udid}] 评论API返回: {comments_response}")
 
                         # 随机决定上下滑动次数
-                        up_swipes = random.randint(2, 5)
-                        down_swipes = random.randint(1, 3)
+                        up_swipes = 3
+                        down_swipes = 1
                         print(f"[{udid}] 准备在评论区滑动: 向上{up_swipes}次, 向下{down_swipes}次")
 
                         # 在评论区滑动
@@ -881,12 +880,12 @@ def multi_platform_operations(udid):
         subprocess.run(['adb', '-s', udid, 'shell', 'input', 'keyevent', 'KEYCODE_HOME'])
         time.sleep(2)
 
-        # # 3. 执行抖音操作
-        # perform_douyin_operations(udid)
+        # 3. 执行抖音操作
+        perform_douyin_operations(udid)
 
-        # # 4. 回到桌面
-        # subprocess.run(['adb', '-s', udid, 'shell', 'input', 'keyevent', 'KEYCODE_HOME'])
-        # time.sleep(2)
+        # 4. 回到桌面
+        subprocess.run(['adb', '-s', udid, 'shell', 'input', 'keyevent', 'KEYCODE_HOME'])
+        time.sleep(2)
 
         # 5. 锁屏
         lock_screen(udid)
@@ -1348,7 +1347,7 @@ def human_swipe(udid, start_x, start_y, end_x, end_y, duration=300):
         distance_y = end_y - start_y
         
         # 生成3-5个中间点，使轨迹更自然
-        points_count = random.randint(3, 5)
+        points_count = 4
         points = [(start_x, start_y)]
         
         for i in range(points_count):
