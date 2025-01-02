@@ -652,24 +652,33 @@ def preprocess_image_from_base64(base64_data):
     cv2.imwrite("processed_image_debug.png", binary)
     return binary
 
-def tk_extract_text_from_base64(base64_data):
+def tk_extract_text_from_base64(base64_data, min_length=30):
     """
-    从 Tiktok Base64 数据中提取评论信息
+    从 Tiktok Base64 数据中提取评论信息，并过滤掉长度小于 min_length 的评论
     """
-    #解码base64
+    # 解码base64
     image_data = base64.b64decode(base64_data)
     np_arr = np.frombuffer(image_data, np.uint8)
     img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
-    #转为灰度图像
+
+    # 转为灰度图像
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    #使用Tesseract进行OCR
-    text = pytesseract.image_to_string(gray, lang='eng+chi_sim',config='--psm 6')
-    #过滤评论内容
+    gray = cv2.GaussianBlur(gray, (5, 5), 0)
+
+    # 使用Tesseract进行OCR
+    text = pytesseract.image_to_string(gray, lang='eng', config='--psm 6')
+
+    # 过滤评论内容
     comments = []
     for line in text.split('\n'):
+        # 去掉空行和含有无关关键字的行
         if line.strip() and not any(keyword in line.lower() for keyword in ["search", "like", "reply"]):
-            comments.append(line.strip())
+            # 只保留长度大于等于 min_length 的行
+            if len(line.strip()) >= min_length:
+                comments.append(line.strip())
+
     return comments
+
 
 def extract_comments_from_base64(base64_data):
     """
