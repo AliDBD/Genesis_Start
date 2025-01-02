@@ -33,11 +33,111 @@ import string  # 添加到其他 import 语句部分
 # 设置默认编码为utf-8
 sys.stdout.reconfigure(encoding='utf-8')
 
-# 日志配置
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(threadName)s] %(message)s")
-current_directory = os.path.dirname(os.path.abspath(__file__))
-log_file_path = os.path.join(current_directory, 'app.log')
+def setup_logging():
+    """配置日志系统"""
+    try:
+        # 创建日志目录
+        log_directory = r"E:\PycharmProjects\genesis_start\CMPC_System\logs"
+        if not os.path.exists(log_directory):
+            os.makedirs(log_directory)
+        
+        # 生成带时间戳的日志文件名
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        log_file_path = os.path.join(log_directory, f'instagram_{timestamp}.log')
+        
+        # 配置日志格式
+        formatter = logging.Formatter(
+            '%(asctime)s [%(levelname)s] %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        )
+        
+        # 创建文件处理器
+        file_handler = logging.FileHandler(log_file_path, encoding='utf-8')
+        file_handler.setFormatter(formatter)
+        file_handler.setLevel(logging.DEBUG)
+        
+        # 创建控制台处理器
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setFormatter(formatter)
+        console_handler.setLevel(logging.INFO)
+        
+        # 获取根日志记录器并配置
+        logger = logging.getLogger()
+        logger.setLevel(logging.DEBUG)
+        
+        # 清除现有的处理器
+        logger.handlers.clear()
+        
+        # 添加处理器
+        logger.addHandler(file_handler)
+        logger.addHandler(console_handler)
+        
+        logging.info(f"日志系统初始化完成，日志文件：{log_file_path}")
+        
+    except Exception as e:
+        print(f"设置日志系统时出错: {e}")
+        raise
 
+
+def check_live_stream(udid):
+    """
+    检查当前页面是否包含直播内容
+    返回: bool
+    """
+    try:
+        # 使用UIAutomator dump当前界面
+        dump_result = subprocess.run(
+            ['adb', '-s', udid, 'shell', 'uiautomator', 'dump', '/data/local/tmp/ui.xml'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=True,
+            timeout=5  # 添加超时限制
+        )
+
+        # 将xml文件拉到本地
+        pull_result = subprocess.run(
+            ['adb', '-s', udid, 'pull', '/data/local/tmp/ui.xml', f'temp_{udid}.xml'],
+            check=True,
+            timeout=5  # 添加超时限制
+        )
+
+        # 读取xml文件内容
+        tree = ET.parse(f'temp_{udid}.xml')
+        root = tree.getroot()
+
+        # 扩展直播相关的关键词列表
+        live_keywords = [
+            'LIVE', 'LIVE now', 'Tap to watch LIVE'
+        ]
+
+        # 检查所有可能包含文本的节点
+        text_nodes = root.findall(".//node[@text]")
+        for node in text_nodes:
+            text = node.get('text', '').strip()
+            if any(keyword.lower() in text.lower() for keyword in live_keywords):
+                print(f"[{udid}] 检测到直播内容标识: {text}")
+                return True
+
+        return False
+
+    except subprocess.TimeoutExpired:
+        print(f"[{udid}] 检查直播内容超时")
+        return False
+    except Exception as e:
+        print(f"[{udid}] 检查直播内容时出错: {e}")
+        return False
+    finally:
+        # 清理临时文件
+        try:
+            if os.path.exists(f'temp_{udid}.xml'):
+                os.remove(f'temp_{udid}.xml')
+            subprocess.run(
+                ['adb', '-s', udid, 'shell', 'rm', '/data/local/tmp/ui.xml'],
+                timeout=3
+            )
+        except Exception as e:
+            print(f"[{udid}] 清理临时文件失败: {e}")
 
 def input_text(udid, text):
     """使用直接的adb shell input text 命令输入文本，并模拟人工输入速度"""
@@ -205,8 +305,12 @@ def check_device_status(udid):
             battery_cmd = "dumpsys battery | grep level"
             battery_result = subprocess.run(['adb', '-s', udid, 'shell', battery_cmd],
                                             stdout=subprocess.PIPE, text=True)
-            battery_level = int(battery_result.stdout.split(':')[1].strip())
-            status['battery_level'] = battery_level
+            # 提取电池电量数值
+            for line in battery_result.stdout.splitlines():
+                if 'level' in line:
+                    battery_level = int(line.split(':')[1].strip())
+                    status['battery_level'] = battery_level
+                    break
 
             # 检查WiFi连接
             wifi_cmd = "dumpsys wifi | grep 'Wi-Fi is'"
@@ -264,43 +368,38 @@ def base64_to_temp_image_file(base64_data, temp_path="temp_keyword_image.png"):
 #         return None
 def get_screenshot_base64(udid):
     """
-    截取当前手机屏幕，将截图转换为Base64后返回，并删除手机端与本地的临时截图文件。
+    获取设备截图并转换为base64，优化打印和清理逻辑
     """
-    # 1. 随机生成截图文件名（也可使用时间戳等）
-    random_str = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
-    filename = f"screenshot_{int(time.time())}_{random_str}.png"
-
-    # 2. 定义手机端的截图路径和本地保存路径
-    phone_path = f"/sdcard/{filename}"       # 手机存储路径
-    local_path = os.path.join(os.getcwd(), filename)  # 本地保存路径
-
-    # 3. 依次执行的 ADB 命令
-    cmd_screencap = f"adb -s {udid} shell screencap -p {phone_path}"
-    cmd_pull = f"adb -s {udid} pull {phone_path} {local_path}"
-    cmd_rm_phone = f"adb -s {udid} shell rm {phone_path}"
-
-
     try:
-        # 3.1 手机端截图
-        subprocess.run(cmd_screencap, shell=True, check=True)
+        print(f"[{udid}] 开始执行截屏操作...")
 
-        # 3.2 将截图拉取至本地
-        subprocess.run(cmd_pull, shell=True, check=True)
+        # 清理设备上的旧截图
+        subprocess.run(['adb', '-s', udid, 'shell', 'rm', '-f', '/data/local/tmp/screen*.png'], check=True)
 
-        # 3.3 将本地截图文件读取为Base64
-        with open(local_path, 'rb') as f:
-            image_data = f.read()
-        base64_str = base64.b64encode(image_data).decode('utf-8')
+        # 生成带时间戳的文件名
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+        device_filename = f"/data/local/tmp/screen_{timestamp}.png"
+        local_filename = f"temp_{udid}_{timestamp}.png"
 
-    finally:
-        # 4. 清理手机端的截图文件
-        subprocess.run(cmd_rm_phone, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # 截取屏幕并传输
+        subprocess.run(['adb', '-s', udid, 'shell', 'screencap', '-p', device_filename], check=True)
+        subprocess.run(['adb', '-s', udid, 'pull', device_filename, local_filename], check=True)
 
-        # 5. 清理本地的截图文件
-        if os.path.exists(local_path):
-            os.remove(local_path)
+        # 转换为 Base64
+        with open(local_filename, 'rb') as image_file:
+            base64_data = base64.b64encode(image_file.read()).decode('utf-8')
 
-    return base64_str
+        # 打印摘要信息，避免长字符串干扰
+        print(f"[{udid}] 截图转换完成，Base64长度: {len(base64_data)}")
+        # 清理临时文件
+        os.remove(local_filename)
+        subprocess.run(['adb', '-s', udid, 'shell', 'rm', '-f', device_filename], check=True)
+
+        return base64_data
+    except Exception as e:
+        print(f"[{udid}] 截图失败: {e}")
+        return None
+
 
 
 def send_screenshot_to_api(base64_data, udid, api_url):
@@ -413,7 +512,7 @@ def send_comments_to_api(comments, udid, api_url):
 
 def human_swipe(udid, start_x, start_y, end_x, end_y, duration=300):
     """
-    模拟人类的滑动操作，生成一个弧线轨迹
+    模拟人类的滑动操作，生成一个平滑的滑动轨迹
     参数:
     - udid: 设备ID
     - start_x, start_y: 起始坐标
@@ -421,34 +520,12 @@ def human_swipe(udid, start_x, start_y, end_x, end_y, duration=300):
     - duration: 滑动持续时间(毫秒)
     """
     try:
-        # 生成贝塞尔曲线的控制点
-        control_x = (start_x + end_x) / 2 + random.randint(-100, 100)
-        control_y = (start_y + end_y) / 2 + random.randint(-100, 100)
-
-        # 生成贝塞尔曲线的中间点
-        points = []
-        for t in np.linspace(0, 1, num=10):
-            x = (1 - t) ** 2 * start_x + 2 * (1 - t) * t * control_x + t ** 2 * end_x
-            y = (1 - t) ** 2 * start_y + 2 * (1 - t) * t * control_y + t ** 2 * end_y
-            points.append((int(x), int(y)))
-
-        # 计算每段的持续时间
-        segment_duration = duration // len(points)
-        # 执行滑动
-        for i in range(len(points) - 1):
-            x1, y1 = points[i]
-            x2, y2 = points[i + 1]
-            # 每段的实际持续时间添加随机变化
-            actual_duration = segment_duration + random.randint(-50, 50)
-            actual_duration = max(50, min(actual_duration, 500))  # 确保在合理范围内
-            subprocess.run(
-                ['adb', '-s', udid, 'shell', 'input', 'swipe',
-                 str(x1), str(y1), str(x2), str(y2), str(actual_duration)],
-                check=True, timeout=5
-            )
-            # 每段之间添加极短的随机停顿
-            time.sleep(random.uniform(0.01, 0.03))
-
+        # 使用单次 swipe 命令完成整个滑动
+        subprocess.run(
+            ['adb', '-s', udid, 'shell', 'input', 'swipe',
+             str(start_x), str(start_y), str(end_x), str(end_y), str(duration)],
+            check=True, timeout=5
+        )
         return True
 
     except Exception as e:
@@ -457,7 +534,8 @@ def human_swipe(udid, start_x, start_y, end_x, end_y, duration=300):
 
 def mock_api_response():
     """模拟API响应，随机返回True或False"""
-    is_interested = random.choice([True, False])
+    # is_interested = random.choice([True, False])
+    is_interested = True
     return {
         'isInsterested': is_interested,
         'message': 'Mock API response',
@@ -574,12 +652,28 @@ def preprocess_image_from_base64(base64_data):
     cv2.imwrite("processed_image_debug.png", binary)
     return binary
 
-
-
+def tk_extract_text_from_base64(base64_data):
+    """
+    从 Tiktok Base64 数据中提取评论信息
+    """
+    #解码base64
+    image_data = base64.b64decode(base64_data)
+    np_arr = np.frombuffer(image_data, np.uint8)
+    img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+    #转为灰度图像
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    #使用Tesseract进行OCR
+    text = pytesseract.image_to_string(gray, lang='eng+chi_sim',config='--psm 6')
+    #过滤评论内容
+    comments = []
+    for line in text.split('\n'):
+        if line.strip() and not any(keyword in line.lower() for keyword in ["search", "like", "reply"]):
+            comments.append(line.strip())
+    return comments
 
 def extract_comments_from_base64(base64_data):
     """
-    从 Base64 数据中提取评论信息
+    从instagram Base64 数据中提取评论信息
     """
     # 1. 图像预处理
     processed_img = preprocess_image_from_base64(base64_data)
@@ -727,46 +821,33 @@ def tap_on_text(udid, target_texts):
         print(f"点击目标文字失败: {e}")
         return False
 
+"""首页发布视频点击加号"""
 def viode_release(udid,profile):
-    """首页发布视频点击加号"""
     Video_release_x = random.randint(480,560)
     Video_release_y = random.randint(2025,2068)
     tap_point(udid, Video_release_x, Video_release_y)
     print(f"[{udid}] 点击加号按钮")
     time.sleep(3)
 
-    #检测弹框，如果弹框存在，则点击弹框
-    key_alert= "录制新视频"
-    base64_data = get_screenshot_base64(udid)
-    print(f"[{udid}] 开始检测弹框")
-    alert_x, alert_y = find_keyword_coordinates(base64_data, key_alert)
-    if alert_x and alert_y:
-        print(f"[{udid}] 检测到弹框，点击 '{key_alert}' 按钮")  
-        tap_point(udid, alert_x, alert_y)
-        time.sleep(2)
-    else:
-        print(f"[{udid}] 未找到弹框")
-
-    #点击帖子，选中帖子避免选择页面内容错误
-    print(f"[{udid}] 点击帖子，选中帖子避免选择页面内容错误")
-    key_post= "帖子"
-    base64_data = get_screenshot_base64(udid)
-    post_x, post_y = find_keyword_coordinates(base64_data, key_post)
-    tap_point(udid, post_x, post_y)
-    time.sleep(3)
-
-    #选择默认第一条视频继续
-    Confirmation_Video_x = random.randint(965,1010)
-    Confirmation_Video_y = random.randint(195,220)
+    #默认选中第一条视频继续
+    Confirmation_Video_x = random.randint(110,290)
+    Confirmation_Video_y = random.randint(680,850)
     tap_point(udid, Confirmation_Video_x, Confirmation_Video_y)
     time.sleep(3)
-    #点击继续下一步确认，进入到视频文案编辑页面
-    Next_step_x = random.randint(838,975)
-    Next_step_y = random.randint(2024,2102)
+
+    #选中视频后点击右下角继续按钮
+    Next_step_x = random.randint(850,980)
+    Next_step_y = random.randint(2015,2056)
     tap_point(udid, Next_step_x, Next_step_y)
     time.sleep(3)
+    #点击右下角继续下一步确认，进入到视频文案编辑页面
+    Next_step_x = random.randint(850,980)
+    Next_step_y = random.randint(2015,2056)
+    tap_point(udid, Next_step_x, Next_step_y)
+    time.sleep(3)
+    
     #根据页面文案关键字识别输入框准确坐标
-    target_texts = ["添加说明", "输入说明"]
+    target_texts = ["Write a caption"]
     tap_on_text(udid, target_texts)
     time.sleep(5)
     """发布视频的配文文案"""
@@ -774,20 +855,162 @@ def viode_release(udid,profile):
     print(f"[{udid}] 发布视频的配文文案: {copywriting}")
     input_text(udid, text=copywriting)
     time.sleep(1)
-    #关闭键盘
-    # kill_keyboard_x = random.randint(800,850)
-    # kill_keyboard_y = random.randint(2160,2195)
-    # tap_point(udid, kill_keyboard_x, kill_keyboard_y)
-    # time.sleep(1)
     #点击确认按钮分享发布
     Next_step_x = random.randint(935,998)
     Next_step_y = random.randint(188,200)
     tap_point(udid, Next_step_x, Next_step_y)
     time.sleep(15)
 
+def open_tiktok(udid):
+    """打开 Tiktok 应用，进行Tiktok的一系列操作"""
 
+    # 启动 TikTok 应用
+    try:    
+        subprocess.run([
+            'adb', '-s', udid, 'shell',
+            'am', 'start', '-n',
+            'com.zhiliaoapp.musically/com.ss.android.ugc.aweme.splash.SplashActivity'
+        ])
+        time.sleep(5)  # 等待应用启动
+        print(f"[{udid}] TikTok 已启动")
+    except Exception as e:
+        print(f"[{udid}] 启动 TikTok 失败: {e}")
+
+    #启动成功之后，后续操作流程
+    """
+    1. 首页滑动视频
+    2. 兴趣视频双击点赞操作
+    3. 点击允许按钮
+    4. 点击允许按钮
+    5. 点击允许按钮
+    6. 点击允许按钮
+    7. 点击允许按钮
+    """
+    #自定义视频观看次数
+    slide = 2
+    for i in range(slide): 
+        if not check_device_status(udid):
+            try:
+                print(f"[{udid}] 设备断开，重新连接")
+                subprocess.run(['adb', '-s', udid, 'connect'])
+                time.sleep(1)
+            except Exception as e:
+                print(f"[{udid}] 设备断开，重新连接失败: {e}")
+                return      
+        print(f"进行第{i+1}次滑动")
+        try:
+            #获取截图转换为Base64
+            base64_data = get_screenshot_base64(udid)
+            if not base64_data:
+                print(f"[{udid}] 获取截图失败")
+                continue
+            
+            if check_live_stream(udid):
+                    print(f"[{udid}] 跳过直播内容")
+                    # 在 check_live_stream 检测到直播内容后的滑动操作前添加
+                    swipe_coords = [
+                        random.randint(460, 850),  # start_x
+                        1650,                      # start_y
+                        random.randint(540, 840),  # end_x
+                        1020                       # end_y
+                    ]
+                    subprocess.run(
+                        ['adb', '-s', udid, 'shell', 'input', 'swipe'] +
+                        [str(x) for x in swipe_coords] + ['300'],
+                        check=True, timeout=5
+                    )
+                    time.sleep(random.uniform(1, 2))
+                    continue
+
+            api_response = mock_api_response()
+            print(f"[{udid}] 模拟 API 响应: {api_response}")
+            #设置基础等待时间
+            base_wait_time = random.randint(2, 7)
+            time.sleep(base_wait_time)
+
+            #根据API返回结果判断是否感兴趣
+            if api_response and isinstance(api_response, dict) and api_response.get('isInsterested') == True:
+                #等待基础时间
+                time.sleep(base_wait_time)
+                #打开评论区
+                comment_id_x = random.randint(981, 1000)
+                comment_id_y = random.randint(1643, 1700)
+                tap_point(udid, comment_id_x, comment_id_y)
+                time.sleep(2)
+                #准备获取tiktok评论区信息
+                #获取评论区截图
+                base64_data_play = get_screenshot_base64(udid)
+                #提取评论区信息
+                comments = tk_extract_text_from_base64(base64_data_play)
+                if comments:
+                    print(f"[{udid}] 获取到{len(comments)}条评论")
+                    for idx, comment in enumerate(comments, 1):
+                        print(f"{idx}.{comment}")
+
+                #评论区滑动3
+                up_swipes = random.randint(1,3)
+                down_swipes = random.randint(1,2)
+                print(f"[{udid}] 上下滑动次数: {up_swipes}次, {down_swipes}次")
+
+                time.sleep(2)
+
+                #点击空白处关闭评论区
+                blank_x = random.randint(300, 800)
+                blank_y = random.randint(375, 600)
+                tap_point(udid, blank_x, blank_y)
+                time.sleep(1)   
+                #点赞判断
+                if random.randint(1, 9) % 2 == 0:
+                    print(f"[{udid}] 随机数为偶数，执行双击点赞操作")
+                    tap_point(udid, 500, 1500)
+                    time.sleep(0.2)
+                    tap_point(udid, 490, 1500)
+                else:
+                    print(f"[{udid}] 随机数为奇数，跳过双击点赞操作")   
+
+
+                #计算视频总停留时间
+                long_wait_time = random.randint(10, 30)+base_wait_time
+                time.sleep(long_wait_time)
+                print(f"[{udid}] 视频总停留时间: {long_wait_time}秒")
+                #滑动到下一个视频
+                if i < slide - 1:
+                    print(f"[{udid}] 滑动到下一个视频")
+                    start_next_x = random.randint(460, 850)
+                    end_next_x = random.randint(540, 840)
+                    start_next_y = 1650
+                    end_next_y = 1020
+                    human_swipe(udid, start_next_x, start_next_y, end_next_x, end_next_y, duration=random.randint(250, 350))
+                    time.sleep(random.uniform(1, 2))
+
+            else:
+                print(f"{udid}返回为False，默认等待{base_wait_time}秒")
+                print(f"[{udid}] 不感兴趣，跳过")
+                if i < slide - 1:
+                    print(f"[{udid}] 滑动到下一个视频")
+                    start_next_x = random.randint(460, 850)
+                    end_next_x = random.randint(540, 840)
+                    start_next_y = 1650
+                    end_next_y = 1020
+                    human_swipe(udid, start_next_x, start_next_y, end_next_x, end_next_y, duration=random.randint(250, 350))
+                    time.sleep(random.uniform(1, 2))
+        except Exception as e:
+            print(f"[{udid}] 获取截图失败: {e}")
+            continue
+    
+    # 在最后添加关闭应用和返回桌面的逻辑
+    try:
+        # 强制停止 TikTok 应用
+        print(f"[{udid}] 正在关闭 TikTok...")
+        
+        # 返回桌面
+        back_to_home(udid)
+        print(f"[{udid}] TikTok 已关闭并返回桌面")
+    except Exception as close_error:
+        print(f"[{udid}] 关闭 TikTok 或返回桌面时出错: {close_error}")
+
+"""打开 Instagram 应用，进行Instagram的一系列操作"""
 def open_instagram(udid):
-    """打开 Instagram 应用，进行Instagram的一系列操作"""
     try:
         print(f"[{udid}] 正在打开 Instagram...")
         
@@ -808,31 +1031,30 @@ def open_instagram(udid):
         print(f"[{udid}] Instagram 已启动")
         time.sleep(3)
         #场景描述
-        copywriting_profile = "The feeling of reuniting with friends at a gathering after a long time apart."
+        #copywriting_profile = "The feeling of reuniting with friends at a gathering after a long time apart."
         #调用视频发布
-        copywriting = viode_release(udid,copywriting_profile)
-        print(f"[{udid}] 发布视频的配文文案: {copywriting}")
-        input_text(udid, text=copywriting)
-        time.sleep(1)
+        # copywriting = viode_release(udid,copywriting_profile)
+        # print(f"[{udid}] 发布视频的配文文案: {copywriting}")
+        # input_text(udid, text=copywriting)
+        # time.sleep(1)
 
         #回到首页
-        bank_home_x = random.randint(75, 125)
-        bank_home_y = random.randint(2020, 2100)
-        tap_point(udid, bank_home_x, bank_home_y)
-        time.sleep(3)
+        # bank_home_x = random.randint(75, 125)
+        # bank_home_y = random.randint(2020, 2100)
+        # tap_point(udid, bank_home_x, bank_home_y)
         #首页搜索按钮图标坐标
-        search_id_x = random.randint(295, 372)
-        search_id_y = random.randint(2045, 2103)
+        search_id_x = random.randint(273, 310)
+        search_id_y = random.randint(2261, 2296)
+
+        #点击搜索输入框
+        search_count_x = random.randint(305, 528)
+        search_count_y = random.randint(190, 220)
 
         #确认搜索按钮坐标
-        confirm_id_x = random.randint(930,1010)
-        confirm_id_y = random.randint(2020,2090)
-        
-        #Reels按钮坐标
-        reels_id_x = random.randint(980, 1027)
-        reels_id_y = random.randint(350, 360)
+        confirm_id_x = random.randint(951,1010)
+        confirm_id_y = random.randint(2129,2200)
 
-         #针对搜索结果页面进行处理
+         #搜索结果页面
         up_swipes = random.randint(1, 3)
         down_swipes = random.randint(1, 3)
 
@@ -840,14 +1062,29 @@ def open_instagram(udid):
         print(f"点击搜索按钮：（{search_id_x},{search_id_y}）")
         tap_point(udid, search_id_x, search_id_y)
         time.sleep(1)
+
+        #点击搜索框
+        tap_point(udid, search_count_x, search_count_y)
+        time.sleep(1)
          #关键词请求人设
         keyword_profile = "I am a 30-year-old young father who enjoys gourmet food, beautiful cars, and outdoor adventures, and I often take care of my children at home on weekends."
         #调用人设生成关键词方法，获取搜索关键词
-        get_search_keyword(udid,keyword_profile)
+        input_keyword = get_search_keyword(udid,keyword_profile)
         time.sleep(5)
+
+        #输入搜索关键词
+        input_text(udid, text=input_keyword)
+        time.sleep(1)
+
         #点击确认搜索按钮
         tap_point(udid, confirm_id_x, confirm_id_y)
         time.sleep(5)
+        #从右往左滑动显示reels按钮
+        start_hz_x = random.randint(900, 980)
+        end_hz_x = random.randint(280, 450)
+        start_hz_y = 357  # 下部区域
+        end_hz_y = 320    # 上部区域
+        human_swipe(udid, start_hz_x, start_hz_y, end_hz_x, end_hz_y, duration=500)
 
          #切换视频板块Reels
         key_reels= "Reels"
@@ -933,15 +1170,15 @@ def open_instagram(udid):
                     time.sleep(base_wait_time)
                     
                     # 点击评论区
-                    comment_id_x = random.randint(950, 1015)
-                    comment_id_y = random.randint(1365, 1450)
+                    comment_id_x = random.randint(980, 990)
+                    comment_id_y = random.randint(1643, 1700)
                     tap_point(udid, comment_id_x, comment_id_y)
                     print(f"[{udid}] 评论区已打开")
                     time.sleep(2)  # 内容加载
 
                     # 评论区滑动
                     up_swipes = random.randint(1,3)
-                    down_swipes = random.randint(1,3)
+                    down_swipes = random.randint(1,2)
                     print(f"[{udid}] 上下滑动次数: {up_swipes}次, {down_swipes}次")
                     
                     # 在评论区滑动
@@ -1002,7 +1239,7 @@ def open_instagram(udid):
                     print(f"[{udid}] 随机生成的数是: {random_number}")
                     if random_number % 2 == 0:
                         print(f"[{udid}] 随机数为偶数，执行点击关注操作")
-                        key_follow= "关注"
+                        key_follow= "Follow"
                         #获取截图转换为Base64
                         print(f"[{udid}] 开始执行截屏操作...")  
                         click_keyword_base64_data = get_screenshot_base64(udid)
@@ -1016,11 +1253,21 @@ def open_instagram(udid):
                     total_wait_time = base_wait_time + extra_wait_time
                     print(f"[{udid}] 总等待时间: {total_wait_time}秒")
                     time.sleep(total_wait_time)
+                    
+                    #等待结束，滑动到下一个视频
+                    if i < slide - 1:
+                        print(f"[{udid}] 滑动到下一个视频")
+                        start_next_x = random.randint(460, 1000)
+                        end_next_x = random.randint(540, 840)
+                        start_next_y = 1650
+                        end_next_y = 540
+                        
+                        human_swipe(udid, start_next_x, start_next_y, end_next_x, end_next_y, 
+                                    duration=random.randint(250, 350))
+                        time.sleep(random.uniform(0.5, 2))
                 else:
                     print(f"[{udid}] isInterested为False,等待{base_wait_time}秒")
                     time.sleep(base_wait_time)
-                    swipe_to_next_video(udid)
-                
                 # 如果不是最后一次循环，执行滑动
                     if i < slide - 1:
                         print(f"[{udid}] 滑动到下一个视频")
@@ -1065,28 +1312,44 @@ def swipe_to_next_video(udid):
     print(f"[{udid}] 滑动完成")
 
 """接收关键字并返回坐标"""
-def find_keyword_coordinates(image_path, keyword):
-    # 读取图像文件
-    img = cv2.imread(image_path)
-    if img is None:
-        print(f"无法读取图片文件: {image_path}")
+def find_keyword_coordinates(base64_data, keyword):
+    """
+    从 Base64 图像数据中找到关键字的坐标
+    """
+    try:
+        # 解码 Base64 数据为图像
+        image_data = base64.b64decode(base64_data)
+        nparr = np.frombuffer(image_data, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+        if img is None:
+            print("无法解码 Base64 数据为图像")
+            return None
+
+        # 转灰度
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+        # 预处理图像（可选）：二值化
+        _, binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
+
+        # OCR 识别文字及坐标
+        data = pytesseract.image_to_data(binary, lang='chi_sim', output_type=pytesseract.Output.DICT)
+
+        # 遍历 OCR 数据，查找关键字
+        for i, text in enumerate(data["text"]):
+            if keyword in text:
+                x, y, w, h = data["left"][i], data["top"][i], data["width"][i], data["height"][i]
+                center_x, center_y = x + w // 2, y + h // 2
+                print(f"找到关键字 '{keyword}'，坐标: ({center_x}, {center_y})")
+                return (center_x, center_y)
+
+        print(f"未找到关键字 '{keyword}'")
         return None
 
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    
-    # OCR 获取文字+坐标
-    data = pytesseract.image_to_data(gray, lang='chi_sim', output_type=pytesseract.Output.DICT)
+    except Exception as e:
+        print(f"find_keyword_coordinates 错误: {e}")
+        return None
 
-    # 遍历所有文字，寻找关键字
-    for i, text in enumerate(data["text"]):
-        if keyword in text:  # 如果找到关键字
-            x, y, w, h = data["left"][i], data["top"][i], data["width"][i], data["height"][i]
-            center_x, center_y = x + w // 2, y + h // 2
-            print(f"找到关键字 '{keyword}'，中心坐标: ({center_x}, {center_y})")
-            return (center_x, center_y)
-
-    print(f"未找到关键字 '{keyword}'")
-    return None
 
 def back_to_home(udid):
     """返回手机桌面"""
@@ -1152,7 +1415,8 @@ def process_device(udid):
             time.sleep(1)
             
             # 打开 Instagram 并执行操作
-            open_instagram(udid)
+            #open_instagram(udid)
+            open_tiktok(udid)
     except Exception as e:
         print(f"[{udid}] 设备处理过程出错: {e}")
 
@@ -1203,7 +1467,7 @@ def clean_text(text):
 
 
 if __name__ == "__main__":
-    import pytesseract
+    setup_logging()
     pytesseract.pytesseract.tesseract_cmd = r"D:\Software\Tesseract-OCR\tesseract.exe"
     # 获取所有连接的设备
     devices = get_connected_devices()
