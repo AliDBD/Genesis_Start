@@ -972,7 +972,7 @@ def open_tiktok(udid):
                 if random.randint(1, 9) % 2 == 0:
                     print(f"[{udid}] 随机数为偶数，执行双击点赞操作")
                     tap_point(udid, 500, 1500)
-                    time.sleep(0.2)
+                    time.sleep(0.5)
                     tap_point(udid, 490, 1500)
                 else:
                     print(f"[{udid}] 随机数为奇数，跳过双击点赞操作")   
