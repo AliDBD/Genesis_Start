@@ -5,6 +5,7 @@
 # @File : excel_leng_pdf.py
 """
 ***优化代码写入问题
+***可用的代码脚本
 """
 import os
 from PyPDF2 import PdfReader, PdfWriter
@@ -68,9 +69,9 @@ def fill_pdf_with_pypdf2(pdf_template: str, data: dict, output_path: str):
 
 def main():
     # 输入文件路径
-    excel_path = r"E:\tmp\20250102.xlsx"  # Excel 文件路径
+    excel_path = r"E:\tmp\20250214\20250214.xlsx"  # Excel 文件路径
     pdf_template = r"E:\tmp\pdfmoban.pdf"  # PDF 模板路径
-    output_dir = r"E:\tmp\20250102"   # 输出文件夹路径
+    output_dir = r"E:\tmp\20250214"   # 输出文件夹路径
 
     # 创建输出目录（如不存在）
     os.makedirs(output_dir, exist_ok=True)
